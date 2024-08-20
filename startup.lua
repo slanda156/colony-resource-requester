@@ -147,13 +147,15 @@ function setUpDisplay(mon)
     -- logging.log("DEBUG", "Added button: " .. widgets.refreshButton.label)
     widgets.exitButton = Button.new(width / 2 + 17, 1, 1, 5, "Exit", function() running = false end, mon)
     logging.log("DEBUG", "Added button: " .. widgets.exitButton.label)
-    widgets.generalGroup = Group.new(3, "General", mon)
-    logging.log("DEBUG", "Added group: " .. widgets.generalGroup.label)
+    widgets.allGroup = Group.new(3, "All", mon)
+    logging.log("DEBUG", "Added group: " .. widgets.allGroup.label)
     for i, builder in ipairs(builders) do
         local group = Group.new(3 + i, builder.name .. " (lvl" .. builder.lvl .. ")", mon)
         widgets[builder.name] = group
         logging.log("DEBUG", "Added group: " .. builder.name)
     end
+    widgets.generalGroup = Group.new(5, "General", mon)
+    logging.log("DEBUG", "Added group: " .. widgets.generalGroup.label)
 end
 
 function updateDisplay (mon)
@@ -170,14 +172,14 @@ function updateDisplay (mon)
     -- Requests | Work Orders | Citizens | Visitors | Buildings | Research | Stats
     if currentTab == 0 then
         -- Item Name | Requested | Available | Missing | Status
-        widgets.generalGroup:clear()
-        for _, item in ipairs(remainingRequests) do
+        widgets.allGroup:clear()
+        for _, item in ipairs(allRequests) do
             if item then
-                widgets.generalGroup:addItem({item.name, item.needed, item.available, item.missing, item.status})
+                widgets.allGroup:addItem({item.name, item.needed, item.available, item.missing, item.status})
             end
         end
         local i = 0
-        local nextLine = widgets.generalGroup.line + widgets.generalGroup.lines
+        local nextLine = widgets.allGroup.line + widgets.allGroup.lines
         local index = ""
         repeat
             index = "Builder " .. i
@@ -199,6 +201,13 @@ function updateDisplay (mon)
             -- widgets[index].line = nextLine
             i = i + 1
         until i == builderCount
+        widgets.generalGroup:clear()
+        widgets.line = nextLine
+        for _, item in ipairs(remainingRequests) do
+            if item then
+                widgets.generalGroup:addItem({item.name, item.needed, item.available, item.missing, item.status})
+            end
+        end
         for _, widget in pairs(widgets) do
             widget:render()
         end
