@@ -37,17 +37,6 @@ function getPeripherals ()
                 if not monitor.isColor() then
                     displayMode = false
                     log("WARNING", "Monitor must be an Advanced Monitorn, running in headless mode")
-                else
-                    monitor.setBackgroundColor(colors.lightGray)
-                    monitor.setTextColor(colors.black)
-                    monitor.clear()
-                    monitor.setTextScale(2)
-                    monitor.setCursorPos(width / 2 - 2, height / 2 - 1)
-                    monitor.write("Colony")
-                    monitor.setCursorPos(width / 2 - 3, height / 2)
-                    monitor.write("Resource")
-                    monitor.setCursorPos(width / 2 - 3, height / 2 + 1)
-                    monitor.write("Requester")
                 end
             end
         end
@@ -178,50 +167,53 @@ function updateDisplay (mon)
     mon.write("Colony Resource Requester" .. string.rep(" ", width))
     mon.setCursorPos(width - 2, 1)
     mon.write(mode)
-    -- Item Name | Requested | Available | Missing | Status
-    widgets.generalGroup:clear()
-    for _, item in ipairs(remainingRequests) do
-        if item then
-            widgets.generalGroup:addItem({item.name, item.needed, item.available, item.missing, item.status})
-        end
-    end
-    local i = 0
-    local nextLine = widgets.generalGroup.line + widgets.generalGroup.lines
-    local index = ""
-    repeat
-        index = "Builder " .. i
-        for key, widget in pairs(widgets) do
-            if widget.type == "group" then
-                if key == index then
-                    widget:clear()
-                    for _, item in ipairs(builderRequests[i]) do
-                        if item then
-                            widget:addItem({item.name, item.needed, item.available, item.missing, item.status})
-                        end
-                    end
-                    widget.line = nextLine
-                    nextLine = widget.line + widget.lines
-                    break
-                end
+    -- Requests | Work Orders | Citizens | Visitors | Buildings | Research | Stats
+    if currentTab == 0 then
+        -- Item Name | Requested | Available | Missing | Status
+        widgets.generalGroup:clear()
+        for _, item in ipairs(remainingRequests) do
+            if item then
+                widgets.generalGroup:addItem({item.name, item.needed, item.available, item.missing, item.status})
             end
         end
-        -- widgets[index].line = nextLine
-        i = i + 1
-    until i == builderCount
-    for _, widget in pairs(widgets) do
-        widget:render()
+        local i = 0
+        local nextLine = widgets.generalGroup.line + widgets.generalGroup.lines
+        local index = ""
+        repeat
+            index = "Builder " .. i
+            for key, widget in pairs(widgets) do
+                if widget.type == "group" then
+                    if key == index then
+                        widget:clear()
+                        for _, item in ipairs(builderRequests[i]) do
+                            if item then
+                                widget:addItem({item.name, item.needed, item.available, item.missing, item.status})
+                            end
+                        end
+                        widget.line = nextLine
+                        nextLine = widget.line + widget.lines
+                        break
+                    end
+                end
+            end
+            -- widgets[index].line = nextLine
+            i = i + 1
+        until i == builderCount
+        for _, widget in pairs(widgets) do
+            widget:render()
+        end
+        -- Green: Available, Yellow: Requested, Red: Missing, Blue: Blacklisted | Heartbeat
+        mon.setBackgroundColor(colors.black)
+        mon.setCursorPos(1, height)
+        mon.setTextColor(colors.green)
+        mon.write("Available")
+        mon.setTextColor(colors.yellow)
+        mon.write(" Requested")
+        mon.setTextColor(colors.red)
+        mon.write(" Missing")
+        mon.setTextColor(colors.blue)
+        mon.write(" Blacklisted")
     end
-    -- Green: Available, Yellow: Requested, Red: Missing, Blue: Blacklisted | Heartbeat
-    mon.setBackgroundColor(colors.black)
-    mon.setCursorPos(1, height)
-    mon.setTextColor(colors.green)
-    mon.write("Available")
-    mon.setTextColor(colors.yellow)
-    mon.write(" Requested")
-    mon.setTextColor(colors.red)
-    mon.write(" Missing")
-    mon.setTextColor(colors.blue)
-    mon.write(" Blacklisted")
     mon.setCursorPos(width - 5, height)
     mon.setTextColor(colors.white)
     mon.write(updateInterval - iteration .. "s")
@@ -232,6 +224,20 @@ function updateDisplay (mon)
         mon.setBackgroundColor(colors.red)
     end
     mon.write("  ")
+end
+
+function callbackRefresh ()
+    log("DEBUG", "Refresh callback")
+    getInputs()
+    if widgets.autoButton.active then
+        moveItems()
+    end
+    if displayMode then
+        os.queueEvent("display_update")
+    end
+    iteration = 0
+    os.cancelTimer(timerID)
+    timerID = os.startTimer(1)
 end
 
 function getBuilders()
@@ -457,7 +463,7 @@ end
 function updateWifi()
 end
 
-function main ()
+function update ()
     -- Get inputs
     getInputs()
     -- Update display
@@ -503,7 +509,7 @@ function handleEvents ()
                 updateDisplay(monitor)
             end
         elseif event == "timer" then
-            main()
+            update()
         end
     end
 end
@@ -517,6 +523,7 @@ end
 log("INFO", "Starting up")
 timerID = 0
 iteration = 0
+currentTab = 0
 startupSuccess = true
 os.setComputerLabel("Colony Resource Requester")
 getPeripherals() -- Get all peripherals
