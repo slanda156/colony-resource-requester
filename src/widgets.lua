@@ -1,4 +1,4 @@
-log = require("logging")
+logging = require("logging")
 
 local Group = {}
 Group.__index = Group
@@ -26,31 +26,31 @@ end
 
 function Group:addItem(item)
     if not item[1] then
-        log("ERROR", "Item name missing")
-        log("DEBUG", "Item: " .. textutils.serialize(item))
+        logging.log("ERROR", "Item name missing")
+        logging.log("DEBUG", "Item: " .. textutils.serialize(item))
         return
     end
     if not item[2] then
-        log("ERROR", "Item needed missing")
-        log("DEBUG", "Item: " .. textutils.serialize(item))
+        logging.log("ERROR", "Item needed missing")
+        logging.log("DEBUG", "Item: " .. textutils.serialize(item))
         return
     end
     if not item[3] then
-        log("ERROR", "Item available missing")
-        log("DEBUG", "Item: " .. textutils.serialize(item))
+        logging.log("ERROR", "Item available missing")
+        logging.log("DEBUG", "Item: " .. textutils.serialize(item))
         return
     end
     if not item[4] then
-        log("ERROR", "Item missing missing")
-        log("DEBUG", "Item: " .. textutils.serialize(item))
+        logging.log("ERROR", "Item missing missing")
+        logging.log("DEBUG", "Item: " .. textutils.serialize(item))
         return
     end
     if not item[5] then
-        log("ERROR", "Item status missing")
-        log("DEBUG", "Item: " .. textutils.serialize(item))
+        logging.log("ERROR", "Item status missing")
+        logging.log("DEBUG", "Item: " .. textutils.serialize(item))
         return
     end
-    log("DEBUG", "Adding item to group: " .. item[1])
+    logging.log("DEBUG", "Adding item to group: " .. item[1])
     table.insert(self.items, item)
     self.size = self.size + 1
     self:updateLines()
@@ -154,7 +154,7 @@ end
 
 function Button:clicked(x, y)
     if x >= self.x and x <= self.x + self.width and y >= self.y and y <= self.y + self.height then
-        log("DEBUG", "Button clicked: " .. self.label)
+        logging.log("DEBUG", "Button clicked: " .. self.label)
         if self.callback then
             self.callback()
         end

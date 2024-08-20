@@ -14,96 +14,96 @@ wifiSendChannel = 1 -- The channel to use for the wifi messages
 wifiReplyChannel = 600 -- The channel to use for the wifi replies
 
 -- Do not change anything below
-log = require("logging")
-Button = require("widgets").Button
-Group = require("widgets").Group
+logging = require("src/logging")
+Button = require("src/widgets").Button
+Group = require("src/widgets").Group
 
 function getPeripherals ()
     if not forceHeadless then
         monitor = peripheral.find("monitor")
         displayMode = true
         if not monitor then
-            log("WARNING", "Couldn't connect to monitor")
-            log("INFO", "Running in headless mode")
+            logging.log("WARNING", "Couldn't connect to monitor")
+            logging.log("INFO", "Running in headless mode")
             displayMode = false
         else
             local width, height = monitor.getSize()
             if width < 14 or height < 10 then
-                log("WARNING", "Monitor too small, at least 3x3 required")
-                log("DEBUG", "Monitor size: " .. width .. "x" .. height)
-                log("INFO", "Running in headless mode")
+                logging.log("WARNING", "Monitor too small, at least 3x3 required")
+                logging.log("DEBUG", "Monitor size: " .. width .. "x" .. height)
+                logging.log("INFO", "Running in headless mode")
                 displayMode = false
             else
                 if not monitor.isColor() then
                     displayMode = false
-                    log("WARNING", "Monitor must be an Advanced Monitorn, running in headless mode")
+                    logging.log("WARNING", "Monitor must be an Advanced Monitorn, running in headless mode")
                 end
             end
         end
     else
         displayMode = false
-        log("INFO", "Running in headless mode (forced)")
+        logging.log("INFO", "Running in headless mode (forced)")
     end
     local meBridge = peripheral.find("meBridge")
     if not meBridge then
-        log("WARNING", "ME Bridge not found")
+        logging.log("WARNING", "ME Bridge not found")
     else
         bridge = meBridge
         mode = "ME"
         if not bridge.getEnergyUsage() then
-            log("ERROR", "ME Bridge not connected or ME system not working")
+            logging.log("ERROR", "ME Bridge not connected or ME system not working")
         else
-            log("INFO", "ME Bridge connected")
+            logging.log("INFO", "ME Bridge connected")
         end
     end
     if not mode then
         local rsBridge = peripheral.find("rsBridge")
         if not rsBridge then
-            log("WARNING", "RS Bridge not found")
+            logging.log("WARNING", "RS Bridge not found")
         else
             bridge = rsBridge
             mode = "RS"
             if not bridge.getEnergyUsage() then
-                log("ERROR", "RS Bridge not connected or RS system not working")
+                logging.log("ERROR", "RS Bridge not connected or RS system not working")
             else
-                log("INFO", "RS Bridge connected")
+                logging.log("INFO", "RS Bridge connected")
             end
         end
     end
     if not mode then
-        log("ERROR", "No storage bridge found")
+        logging.log("ERROR", "No storage bridge found")
         if displayMode == 0 then
-            log("INFO", "Running in headless mode, stopping")
+            logging.log("INFO", "Running in headless mode, stopping")
             startupSuccess = false
             return
         end
-        log("INFO", "Running in display only mode")
+        logging.log("INFO", "Running in display only mode")
         mode = "DP"
     end
     colony = peripheral.find("colonyIntegrator")
     if not colony then
         startupSuccess = false
-        log("ERROR", "Colony Integrator not found")
+        logging.log("ERROR", "Colony Integrator not found")
     else
         if not colony.isInColony() then
             startupSuccess = false
-            log("ERROR", "Colony Integrator not inside a colony")
+            logging.log("ERROR", "Colony Integrator not inside a colony")
         else
-            log("INFO", "Colony Integrator connected")
+            logging.log("INFO", "Colony Integrator connected")
         end
     end
     if wifiEnable then
         wifi = peripheral.find("modem")
         if not wifi then
-            log("WARNING", "Modem not found")
+            logging.log("WARNING", "Modem not found")
         elseif not wifi.isWireless() then
-            log("WARNING", "Modem not wireless")
+            logging.log("WARNING", "Modem not wireless")
         else
             wifi.open(wifiSendChannel)
-            log("INFO", "WIFI enabled")
+            logging.log("INFO", "WIFI enabled")
         end
     else
-        log("INFO", "WIFI disabled")
+        logging.log("INFO", "WIFI disabled")
     end
 
     if mode ~= "DP" then
@@ -114,15 +114,15 @@ function getPeripherals ()
                 if method == "pushItems" then
                     found = true
                     outputInventory = p
-                    log("INFO", "Output inventory found")
-                    log("DEBUG", "Output inventory: " .. p)
+                    logging.log("INFO", "Output inventory found")
+                    logging.log("DEBUG", "Output inventory: " .. p)
                     break
                 end
             end
         end
         if not found then
             mode = "NI"
-            log("ERROR", "No output inventory found")
+            logging.log("ERROR", "No output inventory found")
         end
     end
     sleep(1)
@@ -138,21 +138,21 @@ end
 function setUpDisplay(mon)
     resetDisplay(mon)
     local width, height = mon.getSize()
-    log("DEBUG", "Monitor size: " .. width .. "x" .. height)
+    logging.log("DEBUG", "Monitor size: " .. width .. "x" .. height)
     widgets = {}
     widgets.autoButton = Button.new(width / 2 + 4, 1, 1, 5, "Auto", nil, mon)
     widgets.autoButton.active = true
-    log("DEBUG", "Added button: " .. widgets.autoButton.label)
+    logging.log("DEBUG", "Added button: " .. widgets.autoButton.label)
     -- widgets.refreshButton = Button.new(width / 2 + 9, 1, 1, 5, "Refresh", callbackRefresh, mon)
-    -- log("DEBUG", "Added button: " .. widgets.refreshButton.label)
+    -- logging.log("DEBUG", "Added button: " .. widgets.refreshButton.label)
     widgets.exitButton = Button.new(width / 2 + 17, 1, 1, 5, "Exit", function() running = false end, mon)
-    log("DEBUG", "Added button: " .. widgets.exitButton.label)
+    logging.log("DEBUG", "Added button: " .. widgets.exitButton.label)
     widgets.generalGroup = Group.new(3, "General", mon)
-    log("DEBUG", "Added group: " .. widgets.generalGroup.label)
+    logging.log("DEBUG", "Added group: " .. widgets.generalGroup.label)
     for i, builder in ipairs(builders) do
         local group = Group.new(3 + i, builder.name .. " (lvl" .. builder.lvl .. ")", mon)
         widgets[builder.name] = group
-        log("DEBUG", "Added group: " .. builder.name)
+        logging.log("DEBUG", "Added group: " .. builder.name)
     end
 end
 
@@ -227,7 +227,7 @@ function updateDisplay (mon)
 end
 
 function callbackRefresh ()
-    log("DEBUG", "Refresh callback")
+    logging.log("DEBUG", "Refresh callback")
     getInputs()
     if widgets.autoButton.active then
         moveItems()
@@ -318,8 +318,8 @@ function getInputs()
         end
     end
     local rawAllItems = bridge.listItems()
-    -- log("DEBUG", "All requests: " .. textutils.serialize(allRequests))
-    -- log("DEBUG", "All items: " .. textutils.serialize(rawAllItems))
+    -- logging.log("DEBUG", "All requests: " .. textutils.serialize(allRequests))
+    -- logging.log("DEBUG", "All items: " .. textutils.serialize(rawAllItems))
     for _, item in ipairs(rawAllItems) do
         for _, requestedItem in ipairs(allRequests) do
             if item.fingerprint == requestedItem.fingerprint then
@@ -421,27 +421,27 @@ function moveItems()
         for _, item in ipairs(allRequests) do
             if item.status == "a" then
                 if empty then
-                    log("DEBUG", "Exporting item: " .. item.name .. " (" .. item.fingerprint .. ")" .. " Amount: " .. item.needed)
+                    logging.log("DEBUG", "Exporting item: " .. item.name .. " (" .. item.fingerprint .. ")" .. " Amount: " .. item.needed)
                     bridge.exportItemToPeripheral({fingerprint=item.fingerprint, count=item.needed}, outputInventory)
                 else
-                    log("WARNING", "Ouput Inventory not empty")
+                    logging.log("WARNING", "Ouput Inventory not empty")
                 end
             elseif item.status == "m" then
                 if bridge.isItemCrafting({fingerprint=item.fingerprint}) then
-                    log("DEBUG", "Item is already crafting: " .. item.name .. " (" .. item.fingerprint .. ")")
+                    logging.log("DEBUG", "Item is already crafting: " .. item.name .. " (" .. item.fingerprint .. ")")
                 else
                     if mode == "RS" then
-                        log("DEBUG", "Crafting item: " .. item.name .. " (" .. item.fingerprint .. ")" .. " Amount: " .. item.missing)
+                        logging.log("DEBUG", "Crafting item: " .. item.name .. " (" .. item.fingerprint .. ")" .. " Amount: " .. item.missing)
                         bridge.craftItem({fingerprint=item.fingerprint, count=item.missing})
                     elseif mode == "ME" then
                         if freeCPUs > 0 then
-                            log("DEBUG", "Crafting item: " .. item.name .. " (" .. item.fingerprint .. ")" .. " Amount: " .. item.missing)
+                            logging.log("DEBUG", "Crafting item: " .. item.name .. " (" .. item.fingerprint .. ")" .. " Amount: " .. item.missing)
                             bridge.craftItem({fingerprint=item.fingerprint, count=item.missing})
                             if bridge.isItemCrafting({fingerprint=item.fingerprint}) then
                                 freeCPUs = freeCPUs - 1
                             end
                         else
-                            log("DEBUG", "No free Crafting CPUs available")
+                            logging.log("DEBUG", "No free Crafting CPUs available")
                         end
                     end
                 end
@@ -452,11 +452,11 @@ end
 
 function sendWifi(msg)
     if wifi.isOpen(wifiSendChannel) then
-        log("DEBUG", "Sending message on channel: " .. wifiSendChannel)
-        log("DEBUG", "Message: " .. msg)
+        logging.log("DEBUG", "Sending message on channel: " .. wifiSendChannel)
+        logging.log("DEBUG", "Message: " .. msg)
         wifi.transmit(wifiSendChannel, wifiReplyChannel, msg)
     else
-        log("ERROR", "WIFI channel closed")
+        logging.log("ERROR", "WIFI channel closed")
     end
 end
 
@@ -520,7 +520,7 @@ if logMode == "overwrite" then
     file.close()
 end
 -- Start up
-log("INFO", "Starting up")
+logging.log("INFO", "Starting up")
 timerID = 0
 iteration = 0
 currentTab = 0
@@ -532,10 +532,10 @@ if displayMode then
     setUpDisplay(monitor)
 end
 if not startupSuccess then
-    log("ERROR", "Startup failed")
+    logging.log("ERROR", "Startup failed")
 else
     running = true
-    log("INFO", "Startup successful")
+    logging.log("INFO", "Startup successful")
 end
 
 timerID = os.startTimer(1)
@@ -547,4 +547,4 @@ end
 if displayMode then
     resetDisplay(monitor)
 end
-log("INFO", "Stopped")
+logging.log("INFO", "Stopped")

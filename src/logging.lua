@@ -1,13 +1,16 @@
 file = open("logging.json", "r")
-local config = textutils.unserialize(file.readAll())
+local rawData = file.readAll()
 file.close()
+local config = textutils.unserializeJSON(rawData)
 logFile = config.logFile
 logMode = config.logMode
 logLevel = config.logLevel
 logTimeSource = config.logTimeSource
 logTimeFormat = config.logTimeFormat
 
-function log (level, msg)
+local logging = {}
+
+function logging.log (level, msg)
     if type(level) ~= "string" then
         print("Invalid log level")
         return
@@ -41,4 +44,4 @@ function log (level, msg)
     end
 end
 
-return {log = log}
+return logging
