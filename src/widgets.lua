@@ -80,6 +80,9 @@ end
 
 function Group:render()
     local width, height = self.monitor.getSize()
+    if self.line >= height -1 then
+        return
+    end
     self.monitor.setBackgroundColor(colors.gray)
     self.monitor.setTextColor(colors.black)
     self.monitor.setCursorPos(1, self.line)
@@ -90,6 +93,9 @@ function Group:render()
         self.monitor.setBackgroundColor(colors.lightGray)
         for i, item in ipairs(self.items) do
             if item[1] then
+                if self.line + i >= height - 1 then
+                    break
+                end
                 self.monitor.setCursorPos(1, self.line + i)
                 if item[5] == "a" then
                     self.monitor.setTextColor(colors.green)
