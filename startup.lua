@@ -617,7 +617,7 @@ end
 function moveItems()
     if mode == "ME" or mode == "RS" then
         local empty = true
-        if peripheral.call(outputInventory, "list") ~= {} then
+        if next(peripheral.call(outputInventory, "list")) ~= nil then
             empty = false
         end
         for _, item in ipairs(allRequests) do
