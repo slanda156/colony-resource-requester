@@ -202,7 +202,7 @@ function updateDisplay (mon)
             i = i + 1
         until i == builderCount
         widgets.generalGroup:clear()
-        widgets.line = nextLine
+        widgets.generalGroup.line = nextLine
         for _, item in ipairs(remainingRequests) do
             if item then
                 widgets.generalGroup:addItem({item.name, item.needed, item.available, item.missing, item.status})
