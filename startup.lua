@@ -391,20 +391,21 @@ function getInputs()
             end
         end
     end
-    for _, builder in ipairs(builders) do
-        for _, builderItem in ipairs(builderRequests[builder.id]) do
-            local found = false
-            for _, item in ipairs(allRequests) do
-                if item.fingerprint == builderItem.fingerprint then
-                    found = true
-                    break
-                end
-            end
-            if not found then
-                table.insert(allRequests, builderItem)
-            end
-        end
-    end
+    -- Removed do to too many items
+    -- for _, builder in ipairs(builders) do
+    --     for _, builderItem in ipairs(builderRequests[builder.id]) do
+    --         local found = false
+    --         for _, item in ipairs(allRequests) do
+    --             if item.fingerprint == builderItem.fingerprint then
+    --                 found = true
+    --                 break
+    --             end
+    --         end
+    --         if not found then
+    --             table.insert(allRequests, builderItem)
+    --         end
+    --     end
+    -- end
     for _, item in ipairs(allRequests) do
         local remaining = true
         for _, builder in ipairs(builders) do
