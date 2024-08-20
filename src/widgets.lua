@@ -1,4 +1,4 @@
-logging = require("logging")
+logging = require("src/logging")
 
 local Group = {}
 Group.__index = Group
