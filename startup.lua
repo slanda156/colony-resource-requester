@@ -354,7 +354,6 @@ function setUpDisplay(mon)
     log("DEBUG", "Added button: " .. widgets.exitButton.label)
     widgets.generalGroup = Group.new(3, "General", mon)
     log("DEBUG", "Added group: " .. widgets.generalGroup.label)
-    builders, builderCount = getBuilders()
     for i, builder in ipairs(builders) do
         local group = Group.new(3 + i, builder.name .. " (lvl" .. builder.lvl .. ")", mon)
         widgets[builder.name] = group
@@ -617,10 +616,18 @@ end
 
 function moveItems()
     if mode == "ME" or mode == "RS" then
+        local empty = true
+        if peripheral.call(outputInventory, "list") ~= {} then
+            empty = false
+        end
         for _, item in ipairs(allRequests) do
             if item.status == "a" then
-                log("DEBUG", "Exporting item: " .. item.name .. " (" .. item.fingerprint .. ")" .. " Amount: " .. item.needed)
-                bridge.exportItemToPeripheral({fingerprint=item.fingerprint, count=item.needed}, outputInventory)
+                if empty then
+                    log("DEBUG", "Exporting item: " .. item.name .. " (" .. item.fingerprint .. ")" .. " Amount: " .. item.needed)
+                    bridge.exportItemToPeripheral({fingerprint=item.fingerprint, count=item.needed}, outputInventory)
+                else
+                    log("WARNING", "Ouput Inventory not empty")
+                end
             elseif item.status == "m" then
                 if bridge.isItemCrafting({fingerprint=item.fingerprint}) then
                     log("DEBUG", "Item is already crafting: " .. item.name .. " (" .. item.fingerprint .. ")")
@@ -721,6 +728,7 @@ iteration = 0
 startupSuccess = true
 os.setComputerLabel("Colony Resource Requester")
 getPeripherals() -- Get all peripherals
+builders, builderCount = getBuilders()
 if displayMode then
     setUpDisplay(monitor)
 end
