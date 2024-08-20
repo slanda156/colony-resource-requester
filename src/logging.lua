@@ -1,4 +1,4 @@
-file = open("logging.json", "r")
+file = fs.open("logging.json", "r")
 local rawData = file.readAll()
 file.close()
 local config = textutils.unserializeJSON(rawData)
