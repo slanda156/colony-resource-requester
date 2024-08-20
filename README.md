@@ -2,3 +2,5 @@
 
 # Installation
 Install with `pastebin get CCPD5tYp install`
+
+WIFI is WIP
