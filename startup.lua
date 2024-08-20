@@ -14,7 +14,7 @@ wifiSendChannel = 1 -- The channel to use for the wifi messages
 wifiReplyChannel = 600 -- The channel to use for the wifi replies
 
 -- Do not change anything below
-log = require("loggging")
+log = require("logging")
 Button = require("widgets").Button
 Group = require("widgets").Group
 
