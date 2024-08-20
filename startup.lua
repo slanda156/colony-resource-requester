@@ -154,8 +154,8 @@ function setUpDisplay(mon)
         widgets[builder.name] = group
         logging.log("DEBUG", "Added group: " .. builder.name)
     end
-    widgets.generalGroup = Group.new(5, "General", mon)
-    logging.log("DEBUG", "Added group: " .. widgets.generalGroup.label)
+    -- widgets.generalGroup = Group.new(5, "General", mon)
+    -- logging.log("DEBUG", "Added group: " .. widgets.generalGroup.label)
 end
 
 function updateDisplay (mon)
@@ -201,13 +201,13 @@ function updateDisplay (mon)
             -- widgets[index].line = nextLine
             i = i + 1
         until i == builderCount
-        widgets.generalGroup:clear()
-        widgets.generalGroup.line = nextLine
-        for _, item in ipairs(remainingRequests) do
-            if item then
-                widgets.generalGroup:addItem({item.name, item.needed, item.available, item.missing, item.status})
-            end
-        end
+        -- widgets.generalGroup:clear()
+        -- widgets.generalGroup.line = nextLine
+        -- for _, item in ipairs(remainingRequests) do
+        --     if item then
+        --         widgets.generalGroup:addItem({item.name, item.needed, item.available, item.missing, item.status})
+        --     end
+        -- end
         for _, widget in pairs(widgets) do
             widget:render()
         end
