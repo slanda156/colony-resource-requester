@@ -1,0 +1,12 @@
+{
+    "_comment_logFIle": "The file to log to",
+    "logFile": "colony.log",
+    "_comment_logMode": "append, overwrite",
+    "logMode": "overwrite",
+    "_comment_logLevel": "DEBUG, INFO, WARNING, ERROR",
+    "logLevel": "INFO",
+    "_comment_logTimeSource": "ingame: The in-game time, local: The server time, utc: UTC time",
+    "logTimeSource": "local",
+    "_comment_logTimeFormat": "false: 12h, true: 24h",
+    "logTimeFormat": true
+}

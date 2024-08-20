@@ -1,51 +1,22 @@
--- Logging configuration
-logFile = "colony.log" -- The file to log to
-logMode = "overwrite" -- append, overwrite
-logLevel = "INFO" -- DEBUG, INFO, WARNING, ERROR
-logTimeSource = "local" -- ingame: The in-game time, local: The server time, utc: UTC time
-logTimeFormat = true -- false: 12h, true: 24h
+-- -- Logging configuration
+-- logFile = "colony.log" -- The file to log to
+-- logMode = "overwrite" -- append, overwrite
+-- logLevel = "INFO" -- DEBUG, INFO, WARNING, ERROR
+-- logTimeSource = "local" -- ingame: The in-game time, local: The server time, utc: UTC time
+-- logTimeFormat = true -- false: 12h, true: 24h
 
 -- Runtime configuration
 updateInterval = 30 -- in seconds
 forceHeadless = false -- Force headless mode
+-- WIFI is WIP and not working
 wifiEnable = true -- Enable wifi
 wifiSendChannel = 1 -- The channel to use for the wifi messages
 wifiReplyChannel = 600 -- The channel to use for the wifi replies
 
 -- Do not change anything below
-function log (level, msg)
-    if type(level) ~= "string" then
-        print("Invalid log level")
-        return
-    end
-    if type(msg) ~= "string" then
-        print("Invalid log message")
-        return
-    end
-    local allowedLevels = {DEBUG=0, INFO=1, WARNING=2, ERROR=3}
-    if logLevel == "INFO" then
-        allowedLevels["DEBUG"] = nil
-    elseif logLevel == "WARNING" then
-        allowedLevels["DEBUG"] = nil
-        allowedLevels["INFO"] = nil
-    elseif logLevel == "ERROR" then
-        allowedLevels["DEBUG"] = nil
-        allowedLevels["INFO"] = nil
-        allowedLevels["WARNING"] = nil
-    end
-    if allowedLevels[level] ~= nil then
-        local finalMsg = textutils.formatTime(os.time(logTimeSource), logTimeFormat) .. " - " .. level .. " - " ..  msg
-        print(finalMsg)
-        local file = fs.open(logFile, "a")
-        if type(file) == "string" then
-            print("Couldn't open log file")
-            print(file)
-        else
-            file.write(finalMsg .. "\n")
-        end
-        file.close()
-    end
-end
+log = require("loggging")
+Button = require("widgets").Button
+Group = require("widgets").Group
 
 function getPeripherals ()
     if not forceHeadless then
@@ -168,171 +139,6 @@ function getPeripherals ()
     sleep(1)
 end
 
-local Group = {}
-Group.__index = Group
-
-function Group.new(line, label, mon)
-    local self = setmetatable({}, Group)
-    self.type = "group"
-    self.line = line
-    self.lines = 1
-    self.label = label
-    self.collapsed = false
-    self.size = 0
-    self.items = {}
-    self.monitor = mon
-    return self
-end
-
-function Group:updateLines()
-    if self.collapsed then
-        self.lines = 1
-    else
-        self.lines = 1 + self.size
-    end
-end
-
-function Group:addItem(item)
-    if not item[1] then
-        log("ERROR", "Item name missing")
-        log("DEBUG", "Item: " .. textutils.serialize(item))
-        return
-    end
-    if not item[2] then
-        log("ERROR", "Item needed missing")
-        log("DEBUG", "Item: " .. textutils.serialize(item))
-        return
-    end
-    if not item[3] then
-        log("ERROR", "Item available missing")
-        log("DEBUG", "Item: " .. textutils.serialize(item))
-        return
-    end
-    if not item[4] then
-        log("ERROR", "Item missing missing")
-        log("DEBUG", "Item: " .. textutils.serialize(item))
-        return
-    end
-    if not item[5] then
-        log("ERROR", "Item status missing")
-        log("DEBUG", "Item: " .. textutils.serialize(item))
-        return
-    end
-    log("DEBUG", "Adding item to group: " .. item[1])
-    table.insert(self.items, item)
-    self.size = self.size + 1
-    self:updateLines()
-end
-
-function Group:removeItem(item)
-    for i, v in ipairs(self.items) do
-        if v == item then
-            table.remove(self.items, i)
-            self.size = self.size - 1
-            self:updateLines()
-            break
-        end
-    end
-end
-
-function Group:clear()
-    self.items = {}
-    self.size = 0
-    self:updateLines()
-end
-
-function Group:toggle()
-    self.collapsed = not self.collapsed
-    self:updateLines()
-end
-
-function Group:render()
-    local width, height = self.monitor.getSize()
-    self.monitor.setBackgroundColor(colors.gray)
-    self.monitor.setTextColor(colors.black)
-    self.monitor.setCursorPos(1, self.line)
-    if self.collapsed then
-        self.monitor.write("+ " .. self.size .. " " .. self.label .. ":" .. string.rep(" ", width))
-    else
-        self.monitor.write("- " .. self.size .. " " .. self.label .. ":" .. string.rep(" ", width))
-        self.monitor.setBackgroundColor(colors.lightGray)
-        for i, item in ipairs(self.items) do
-            if item[1] then
-                self.monitor.setCursorPos(1, self.line + i)
-                if item[5] == "a" then
-                    self.monitor.setTextColor(colors.green)
-                elseif item[5] == "c" then
-                    self.monitor.setTextColor(colors.yellow)
-                elseif item[5] == "m" then
-                    self.monitor.setTextColor(colors.red)
-                elseif item[5] == "b" then
-                    self.monitor.setTextColor(colors.blue)
-                else
-                    self.monitor.setTextColor(colors.pink)
-                end
-                self.monitor.write("    " .. item[1])
-                self.monitor.write(string.rep(" ", 25 - string.len(item[1])))
-                self.monitor.write(" | " .. item[2])
-                self.monitor.write(string.rep(" ", 5 - string.len(tostring(item[2]))))
-                self.monitor.write(" | " .. item[3])
-                self.monitor.write(string.rep(" ", 5 - string.len(tostring(item[3]))))
-                self.monitor.write(" | " .. item[4])
-                self.monitor.write(string.rep(" ", width))
-            end
-        end
-    end
-end
-
-function Group:clicked(x, y)
-    if y == self.line then
-        self:toggle()
-        os.queueEvent("display_update")
-        return true
-    end
-    return false
-end
-
-local Button = {}
-Button.__index = Button
-
-function Button.new(x, y, width, height, label, callback, mon)
-    local self = setmetatable({}, Button)
-    self.type = "button"
-    self.x = x
-    self.y = y
-    self.width = width
-    self.height = height
-    self.label = label
-    self.callback = callback
-    self.active = false
-    self.monitor = mon
-    return self
-end
-
-function Button:render()
-    self.monitor.setTextColor(colors.black)
-    self.monitor.setCursorPos(self.x, self.y)
-    if self.active then
-        self.monitor.setBackgroundColor(colors.green)
-    else
-        self.monitor.setBackgroundColor(colors.red)
-    end
-    self.monitor.write(self.label)
-end
-
-function Button:clicked(x, y)
-    if x >= self.x and x <= self.x + self.width and y >= self.y and y <= self.y + self.height then
-        log("DEBUG", "Button clicked: " .. self.label)
-        if self.callback then
-            self.callback()
-        end
-        self.active = not self.active
-        os.queueEvent("display_update")
-        return true
-    end
-    return false
-end
-
 function resetDisplay(mon)
     mon.setBackgroundColor(colors.black)
     mon.setTextColor(colors.white)
@@ -359,20 +165,6 @@ function setUpDisplay(mon)
         widgets[builder.name] = group
         log("DEBUG", "Added group: " .. builder.name)
     end
-end
-
-function callbackRefresh ()
-    log("DEBUG", "Refresh callback")
-    getInputs()
-    if widgets.autoButton.active then
-        moveItems()
-    end
-    if displayMode then
-        os.queueEvent("display_update")
-    end
-    iteration = 0
-    os.cancelTimer(timerID)
-    timerID = os.startTimer(1)
 end
 
 function updateDisplay (mon)
