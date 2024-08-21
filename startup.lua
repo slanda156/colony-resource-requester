@@ -445,12 +445,19 @@ function moveItems()
                     if mode == "RS" then
                         logging.log("DEBUG", "Crafting item: " .. item.name .. " (" .. item.fingerprint .. ")" .. " Amount: " .. item.missing)
                         bridge.craftItem({fingerprint=item.fingerprint, count=item.missing})
+                        sleep(0.1)
+                        if not bridge.isItemCrafting({fingerprint=item.fingerprint}) then
+                            logging.log("WARNING", "Couldn't craft item")
+                        end
                     elseif mode == "ME" then
                         if freeCPUs > 0 then
                             logging.log("DEBUG", "Crafting item: " .. item.name .. " (" .. item.fingerprint .. ")" .. " Amount: " .. item.missing)
                             bridge.craftItem({fingerprint=item.fingerprint, count=item.missing})
+                            sleep(0.1)
                             if bridge.isItemCrafting({fingerprint=item.fingerprint}) then
                                 freeCPUs = freeCPUs - 1
+                            else
+                                logging.log("WARNING", "Couldn't craft item")
                             end
                         else
                             logging.log("DEBUG", "No free Crafting CPUs available")
