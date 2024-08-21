@@ -112,10 +112,15 @@ function Group:render()
         orderMsg = orderMsg .. " " .. self.order.buildingName
         orderMsg = orderMsg .. " (lvl" .. self.order.targetLevel .. ")"
     end
-    if orderMsg == "" then
-        self.monitor.write("+ " .. self.size .. " " .. self.label .. ":" .. string.rep(" ", width))
+    if self.collapsed then
+        collSign = "+"
     else
-        self.monitor.write("+ " .. self.size .. " " .. self.label .. ":" .. "(" .. orderMsg .. ")" .. string.rep(" ", width))
+        collSign = "-"
+    end
+    if orderMsg == "" then
+        self.monitor.write(collSign .. self.size .. " " .. self.label .. ":" .. string.rep(" ", width))
+    else
+        self.monitor.write(collSign .. self.size .. " " .. self.label .. ":" .. "(" .. orderMsg .. ")" .. string.rep(" ", width))
     end
     if not self.collapsed then
         self.monitor.setBackgroundColor(colors.lightGray)
