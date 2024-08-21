@@ -493,7 +493,14 @@ end
 
 function update ()
     -- Get inputs
-    getInputs()
+    if bridge.getEnergyUsage() then
+        getInputs()
+    else
+        logging.log("ERROR", "ME/RS system not working")
+        logging.log("INFO", "Retrying in 10 seconds")
+        timerID = os.startTimer(10)
+        return
+    end
     -- Update display
     if displayMode then
         os.queueEvent("display_update")
