@@ -49,17 +49,17 @@ if not skipInstallerUpdate then
     if not skipQuestions then
         print("Do you want to update the installer? (y/n)")
         io.input(io.stdin)
-        local updateInstallerInput = io.read()
+        updateInstallerInput = io.read()
     else
-        local updateInstallerInput = "y"
+        updateInstallerInput = "y"
     end
     if updateInstallerInput == "y" then
         if not skiptQuestions then
             print("Which branch would you like to use?\n[1]: main (default)\n[2]: dev")
             io.input(io.stdin)
-            local branchInput = io.read()
+            branchInput = io.read()
         else
-            local branchInput = "1"
+            branchInput = "1"
         end
         delFile("install.lua")
         if #branchInput == 0 then
@@ -81,11 +81,11 @@ end
 if not skipQuestions then
     print("Which branch would you like to install?\n[1]: main (default)\n[2]: dev")
     io.input(io.stdin)
-    local branchInput = io.read()
+    branchInput = io.read()
 else
-    local branchInput = "1"
+    branchInput = "1"
 end
-local codes = {}
+codes = {}
 -- ToDo Change codes from def to main when making a pull request
 if #branchInput == 0 then
     branchInput = "1"
@@ -106,7 +106,7 @@ else -- invalid
     return
 end
 
-local numDownloads = 0
+numDownloads = 0
 for f, c in pairs(codes) do
     if c[2] then
         numDownloads = numDownloads + 1
@@ -120,18 +120,18 @@ end
 if not skipQuestions then
     print("Do you want to download "..numDownloads.." files? (y/n)")
     io.input(io.stdin)
-    local downloadInput = io.read()
+    downloadInput = io.read()
     if downloadInput ~= "y" then
         print("Exiting")
         return
     end
 end
 
-local replaceAll = false
+replaceAll = false
 if not skipQuestions then
     print("Do you want to replace config files? (y/n)")
     io.input(io.stdin)
-    local replaceInput = io.read()
+    replaceInput = io.read()
     if replaceInput == "y" then
         replaceAll = true
     end
@@ -155,11 +155,11 @@ end
 
 print("Done")
 
-local reboot = true
+reboot = true
 if not skipQuestions then
     print("Do you want to reboot? (y/n)")
     io.input(io.stdin)
-    local rebootInput = io.read()
+    rebootInput = io.read()
     if rebootInput ~= "y" then
         reboot = false
     end
