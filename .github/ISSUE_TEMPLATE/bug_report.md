@@ -24,10 +24,10 @@ A clear and concise description of what you expected to happen.
 **Screenshots**
 If applicable, add screenshots to help explain your problem.
 
-**Version
+**Version**
 Please add the programm version
 
-**Logs
+**Logs**
 If available atache the log file
 
 **Additional context**
