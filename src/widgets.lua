@@ -50,7 +50,6 @@ function Group:addItem(item)
         logging.log("DEBUG", "Item: " .. textutils.serialize(item))
         return
     end
-    logging.log("DEBUG", "Adding item to group: " .. item[1])
     table.insert(self.items, item)
     self.size = self.size + 1
     self:updateLines()
