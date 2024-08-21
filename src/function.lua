@@ -18,13 +18,13 @@ function strFuncs.compInt(number)
     if number < 1000 then
         output = output .. number
     elseif number < 1000000 then
-        output = output .. math.floor(number / 100) * 10 .. "K"
+        output = output .. math.floor(number / 100) / 10 .. "K"
     elseif number < 1000000000 then
-        output = output .. math.floor(number / 100000) * 10 .. "M"
+        output = output .. math.floor(number / 100000) / 10 .. "M"
     elseif number < 1000000000000 then
-        output = output .. math.floor(number / 100000000) * 10 .. "G"
+        output = output .. math.floor(number / 100000000) / 10 .. "G"
     else -- Hopefully nothing will ever get this high
-        output = output .. math.floor(number / 100000000000) * 10 .. "T"
+        output = output .. math.floor(number / 100000000000) / 10 .. "T"
     end
     return output
 end
