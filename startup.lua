@@ -133,7 +133,7 @@ function setUpDisplay(mon)
     local width, height = mon.getSize()
     logging.log("DEBUG", "Monitor size: " .. width .. "x" .. height)
     widgets = {}
-    widgets.autoButton = Button.new(width / 2 + 4, 1, 1, 5, " Auto ", nil, mon)
+    widgets.autoButton = Button.new(width * (3 / 4), 1, 1, 5, " Auto ", nil, mon)
     widgets.autoButton.active = true
     logging.log("DEBUG", "Added button: " .. widgets.autoButton.label)
     widgets.allGroup = Group.new(3, "All", mon)
