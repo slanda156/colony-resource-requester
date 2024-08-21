@@ -5,8 +5,9 @@ function delFile(file)
     end
 end
 
-
-print("Which branch would you like to install? ([0]: main, [1]: dev)")
+term.clear()
+term.setCursorPos(1, 1)
+print("Which branch would you like to install?\n[0]: main\n[1]: dev")
 io.input(io.stdin)
 local branchInput = io.read()
 local codes = {}
