@@ -226,7 +226,7 @@ function updateDisplay (mon)
     end
     mon.setTextColor(colors.white)
     mon.setCursorPos(width - 13, height)
-    mon.write(VERSION)
+    mon.write("v" .. VERSION)
     mon.setCursorPos(width - 5, height)
     mon.write(updateInterval - iteration .. "s")
     mon.setCursorPos(width - 1, height)
@@ -555,7 +555,7 @@ if logMode == "overwrite" then
     file.close()
 end
 -- Start up
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 logging.log("INFO", "Starting up, " .. VERSION)
 timerID = 0
 iteration = 0
