@@ -272,10 +272,14 @@ function getInputs()
 
     if mode == "ME" then
         local cpus = bridge.getCraftingCPUs()
-        freeCPUs = 0
-        for _, cpu in ipairs(cpus) do
-            if cpu.isBusy == false then
-                freeCPUs = freeCPUs + 1
+        if not cpus then
+            logging.log("ERROR", "No Crafting CPUs found, ME system not working?")
+        else
+            freeCPUs = 0
+            for _, cpu in ipairs(cpus) do
+                if cpu.isBusy == false then
+                    freeCPUs = freeCPUs + 1
+                end
             end
         end
     end
@@ -331,6 +335,10 @@ function getInputs()
     local rawAllItems = bridge.listItems()
     -- logging.log("DEBUG", "All requests: " .. textutils.serialize(allRequests))
     -- logging.log("DEBUG", "All items: " .. textutils.serialize(rawAllItems))
+    if not rawAllItems then
+        logging.log("ERROR", "No items found, ME/RS system not working?")
+        return
+    end
     for _, item in ipairs(rawAllItems) do
         for _, requestedItem in ipairs(allRequests) do
             if item.fingerprint == requestedItem.fingerprint then
