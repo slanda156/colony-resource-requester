@@ -11,6 +11,7 @@ function Group.new(line, label, mon)
     self.label = label
     self.collapsed = false
     self.size = 0
+    self.order = ""
     self.items = {}
     self.monitor = mon
     return self
@@ -22,6 +23,19 @@ function Group:updateLines()
     else
         self.lines = 1 + self.size
     end
+end
+
+function Group:setOrder(order)
+    self.order = order
+    -- .id: string 	The work order's id
+    -- .priority: number 	The priority of the work order
+    -- .workOrderType: string 	The type of work order
+    -- .changed: boolean 	If the work order changed
+    -- .isClaimed: boolean 	Whether the work order has been claimed
+    -- .builder: table 	The position of the builder (has x, y, z)
+    -- .buildingName: string 	The name of the building
+    -- .type: string 	The type of the building
+    -- .targetLevel: number 	The building's target level
 end
 
 function Group:addItem(item)
@@ -85,10 +99,23 @@ function Group:render()
     self.monitor.setBackgroundColor(colors.gray)
     self.monitor.setTextColor(colors.black)
     self.monitor.setCursorPos(1, self.line)
-    if self.collapsed then
-        self.monitor.write("+ " .. self.size .. " " .. self.label .. ":" .. string.rep(" ", width))
-    else
-        self.monitor.write("- " .. self.size .. " " .. self.label .. ":" .. string.rep(" ", width))
+    local orderMsg = ""
+    if self.order then
+        if self.order.workOrderType == "BUIDLING" then
+            oderMsg = oderMsg .. "[B]"
+        elseif self.order.workOrderType == "UPGRADE" then
+            oderMsg = oderMsg .. "[U]"
+        elseif self.order.workOrderType == "REPAIR" then
+            oderMsg = oderMsg .. "[R]"
+        end
+        orderMsg = orderMsg .. " " .. self.order.buildingName
+        orderMsg = orderMsg .. " (lvl" .. self.order.targetLevel .. ")"
+    end
+    if orderMsg == "" then
+        orderMsg = "No order"
+    end
+    self.monitor.write("+ " .. self.size .. " " .. self.label .. ":" .. "(" .. orderMsg .. ")" .. string.rep(" ", width))
+    if not self.collapsed then
         self.monitor.setBackgroundColor(colors.lightGray)
         for i, item in ipairs(self.items) do
             if item[1] then

@@ -177,6 +177,7 @@ function updateDisplay (mon)
                 if widget.type == "group" then
                     if key == index then
                         widget:clear()
+                        widget:setOrder(builderRequests[i].order)
                         for _, item in ipairs(builderRequests[i]) do
                             if item then
                                 widget:addItem({item.name, item.needed, item.available, item.missing, item.status})
@@ -237,9 +238,13 @@ function getBuilders()
     local buildings = colony.getBuildings()
     local builders = {}
     local i = 0
+    local orders = {}
+    for _, order in ipairs(colony.getWorkOrders()) do
+        orders[order.builder] = order
+    end
     for _, building in ipairs(buildings) do
         if building.type == "builder" then
-            table.insert(builders, {name="Builder " .. i, lvl=building.level, pos=building.location, id=i})
+            table.insert(builders, {name="Builder " .. i, lvl=building.level, pos=building.location, order=orders[building.location], id=i})
             i = i + 1
         end
     end
@@ -272,7 +277,11 @@ function getInputs()
 
     for _, builder in ipairs(builders) do
         if not builderRequests[builder.id] then
-            builderRequests[builder.id] = {}
+            builderRequests[builder.id] = {items={}}
+        end
+        -- Get current build order of each builder
+        for _, order in builder.order do
+            builderRequests[builder.id].order = order
         end
         local builderResources = colony.getBuilderResources(builder.pos)
         for _, builderRequest in ipairs(builderResources) do
@@ -282,7 +291,7 @@ function getInputs()
             end
             if builderItem then
                 local skipped = false
-                for _, existingItem in ipairs(builderRequests[builder.id]) do
+                for _, existingItem in ipairs(builderRequests[builder.id].items) do
                     if existingItem.fingerprint == builderItem.fingerprint then
                         existingItem.needed = existingItem.needed + builderItem.count
                         skipped = true
@@ -291,7 +300,7 @@ function getInputs()
                 end
                 if not skipped then
                     local item = {name=builderItem.displayName, fingerprint=builderItem.fingerprint, needed=builderItem.count}
-                    table.insert(builderRequests[builder.id], item)
+                    table.insert(builderRequests[builder.id].items, item)
                 end
             end
         end
@@ -342,7 +351,7 @@ function getInputs()
             end
         end
         for _, builder in ipairs(builders) do
-            for _, requestedItem in ipairs(builderRequests[builder.id]) do
+            for _, requestedItem in ipairs(builderRequests[builder.id].items) do
                 if item.fingerprint == requestedItem.fingerprint then
                     local status = "a"
                     if item.amount < requestedItem.needed then
@@ -373,7 +382,7 @@ function getInputs()
         end
     end
     for _, builder in ipairs(builders) do
-        for _, item in ipairs(builderRequests[builder.id]) do
+        for _, item in ipairs(builderRequests[builder.id].items) do
             if item then
                 if not item.status then
                     item.status = "m"
@@ -401,7 +410,7 @@ function getInputs()
     for _, item in ipairs(allRequests) do
         local remaining = true
         for _, builder in ipairs(builders) do
-            for _, builderItem in ipairs(builderRequests[builder.id]) do
+            for _, builderItem in ipairs(builderRequests[builder.id].items) do
                 if item.fingerprint == builderItem.fingerprint then
                     remaining = false
                     break
@@ -474,6 +483,7 @@ end
 
 function update ()
     -- Get inputs
+    builders, builderCount = getBuilders()
     if bridge.getEnergyUsage() then
         getInputs()
     else
