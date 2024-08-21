@@ -280,8 +280,10 @@ function getInputs()
             builderRequests[builder.id] = {items={}}
         end
         -- Get current build order of each builder
-        for _, order in builder.order do
-            builderRequests[builder.id].order = order
+        if builder.order and builder.order ~= {} then
+            for _, order in builder.order do
+                builderRequests[builder.id].order = order
+            end
         end
         local builderResources = colony.getBuilderResources(builder.pos)
         for _, builderRequest in ipairs(builderResources) do

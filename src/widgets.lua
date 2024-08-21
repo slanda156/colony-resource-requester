@@ -100,7 +100,7 @@ function Group:render()
     self.monitor.setTextColor(colors.black)
     self.monitor.setCursorPos(1, self.line)
     local orderMsg = ""
-    if self.order then
+    if self.order ~= nil and self.order ~= {} and self.order ~= "" then
         if self.order.workOrderType == "BUIDLING" then
             oderMsg = oderMsg .. "[B]"
         elseif self.order.workOrderType == "UPGRADE" then
@@ -112,9 +112,10 @@ function Group:render()
         orderMsg = orderMsg .. " (lvl" .. self.order.targetLevel .. ")"
     end
     if orderMsg == "" then
-        orderMsg = "No order"
+        self.monitor.write("+ " .. self.size .. " " .. self.label .. ":" .. string.rep(" ", width))
+    else
+        self.monitor.write("+ " .. self.size .. " " .. self.label .. ":" .. "(" .. orderMsg .. ")" .. string.rep(" ", width))
     end
-    self.monitor.write("+ " .. self.size .. " " .. self.label .. ":" .. "(" .. orderMsg .. ")" .. string.rep(" ", width))
     if not self.collapsed then
         self.monitor.setBackgroundColor(colors.lightGray)
         for i, item in ipairs(self.items) do
