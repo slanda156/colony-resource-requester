@@ -1,8 +1,17 @@
-function checkArgs(args)
+function checkArgs(arguments)
+    local args = {}
+    for _, arg in ipairs(arguments) do
+        if string.sub(arg, 1, 1) == "-" or string.sub(arg, 1, 2) == "--" then
+            args[arg] = true
+        else
+            table.insert(args, arg)
+        end
+    end
     if args["-h"] or args["--help"] then
         printHelp()
         args["-h"] = nil
         args["--help"] = nil
+        return true
     end
     if args["-y"] or args["--yes"] then
         skipQuestions = true
@@ -21,15 +30,16 @@ function checkArgs(args)
         print("Invalid arguments")
         printHelp()
     end
+    return false
 end
 
 function printHelp()
     print("Usage: ")
-    print("install [arguments]")
+    print("    install [arguments]")
     print("Arguments:")
-    print("-h, --help: Show this help message")
-    print("-y, --yes: Skip all questions and use default values")
-    print("--skip-installer-update: Skip asking for updating the installer")
+    print("    -h, --help: Show this help message")
+    print("    -y, --yes: Skip questions & use default")
+    print("    --skip-installer-update: Skip installer update")
 end
 
 function delFile(file)
@@ -40,7 +50,9 @@ function delFile(file)
 end
 
 local args = {...}
-checkArgs(args)
+if checkArgs(args) then
+    return
+end
 
 term.clear()
 term.setCursorPos(1, 1)
