@@ -4,6 +4,13 @@ function checkArgs()
         args["-h"] = nil
         args["--help"] = nil
     end
+    if args["-y"] or args["--yes"] then
+        skipQuestions = true
+        args["-y"] = nil
+        args["--yes"] = nil
+    else
+        skipQuestions = false
+    end
     if args["--skip-installer-update"] then
         skipInstallerUpdate = true
         args["--skip-installer-update"] = nil
@@ -21,6 +28,7 @@ function printHelp()
     print("install [arguments]")
     print("Arguments:")
     print("-h, --help: Show this help message")
+    print("-y, --yes: Skip all questions and use default values")
     print("--skip-installer-update: Skip asking for updating the installer")
 end
 
@@ -38,13 +46,21 @@ term.clear()
 term.setCursorPos(1, 1)
 
 if not skipInstallerUpdate then
-    print("Do you want to update the installer? (y/n)")
-    io.input(io.stdin)
-    local updateInstallerInput = io.read()
-    if updateInstallerInput == "y" then
-        print("Which branch would you like to use?\n[1]: main (default)\n[2]: dev")
+    if not skipQuestions then
+        print("Do you want to update the installer? (y/n)")
         io.input(io.stdin)
-        local branchInput = io.read()
+        local updateInstallerInput = io.read()
+    else
+        local updateInstallerInput = "y"
+    end
+    if updateInstallerInput == "y" then
+        if not skiptQuestions then
+            print("Which branch would you like to use?\n[1]: main (default)\n[2]: dev")
+            io.input(io.stdin)
+            local branchInput = io.read()
+        else
+            local branchInput = "1"
+        end
         delFile("install.lua")
         if #branchInput == 0 then
             branchInput = "1"
@@ -57,14 +73,18 @@ if not skipInstallerUpdate then
             print("Invalid branch")
             return
         end
-        shell.run("install.lua")
+        shell.run("install.lua", "--skip-installer-update")
         return
     end
 end
 
-print("Which branch would you like to install?\n[1]: main (default)\n[2]: dev")
-io.input(io.stdin)
-local branchInput = io.read()
+if not skipQuestions then
+    print("Which branch would you like to install?\n[1]: main (default)\n[2]: dev")
+    io.input(io.stdin)
+    local branchInput = io.read()
+else
+    local branchInput = "1"
+end
 local codes = {}
 -- ToDo Change codes from def to main when making a pull request
 if #branchInput == 0 then
@@ -97,20 +117,24 @@ for f, c in pairs(codes) do
     end
 end
 
-print("Do you want to download "..numDownloads.." files? (y/n)")
-io.input(io.stdin)
-local downloadInput = io.read()
-if downloadInput ~= "y" then
-    print("Exiting")
-    return
+if not skipQuestions then
+    print("Do you want to download "..numDownloads.." files? (y/n)")
+    io.input(io.stdin)
+    local downloadInput = io.read()
+    if downloadInput ~= "y" then
+        print("Exiting")
+        return
+    end
 end
 
 local replaceAll = false
-print("Do you want to replace config files? (y/n)")
-io.input(io.stdin)
-local replaceInput = io.read()
-if replaceInput == "y" then
-    replaceAll = true
+if not skipQuestions then
+    print("Do you want to replace config files? (y/n)")
+    io.input(io.stdin)
+    local replaceInput = io.read()
+    if replaceInput == "y" then
+        replaceAll = true
+    end
 end
 
 for f, c in pairs(codes) do
@@ -131,12 +155,14 @@ end
 
 print("Done")
 
-local reboot = false
-print("Do you want to reboot? (y/n)")
-io.input(io.stdin)
-local rebootInput = io.read()
-if rebootInput == "y" then
-    reboot = true
+local reboot = true
+if not skipQuestions then
+    print("Do you want to reboot? (y/n)")
+    io.input(io.stdin)
+    local rebootInput = io.read()
+    if rebootInput ~= "y" then
+        reboot = false
+    end
 end
 if reboot then
     shell.run("reboot")
