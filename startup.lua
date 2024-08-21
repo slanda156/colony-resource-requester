@@ -64,9 +64,9 @@ function getPeripherals ()
         end
     end
     if not mode then
-        logging.log("ERROR", "No storage bridge found")
+        logging.log("WARNING", "No storage bridge found")
         if displayMode == 0 then
-            logging.log("INFO", "Running in headless mode, stopping")
+            logging.log("ERROR", "Running in headless mode, stopping")
             startupSuccess = false
             return
         end
