@@ -216,7 +216,7 @@ function Button:render()
 end
 
 function Button:clicked(x, y)
-    if x >= self.x and x <= self.x + self.width - 1 and y >= self.y and y <= self.y + self.height - 1 then
+    if x >= self.x - 1 and x < self.x + self.width and y >= self.y and y < self.y + self.height then -- self.x - 1, unsure why
         logging.log("DEBUG", "Button clicked: " .. self.label)
         if self.callback then
             self.callback()
