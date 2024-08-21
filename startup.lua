@@ -161,9 +161,11 @@ function updateDisplay (mon)
     if currentTab == 0 then
         -- Item Name | Requested | Available | Missing | Status
         widgets.allGroup:clear()
-        for _, item in ipairs(allRequests) do
-            if item then
-                widgets.allGroup:addItem({item.name, item.needed, item.available, item.missing, item.status})
+        if allRequests ~= nil and allRequests ~= {} then
+            for _, item in ipairs(allRequests) do
+                if item then
+                    widgets.allGroup:addItem({item.name, item.needed, item.available, item.missing, item.status})
+                end
             end
         end
         local i = 0
@@ -249,13 +251,13 @@ function getBuilders()
     return builders, i
 end
 
-function getInputs()
+function getInputs(skip)
     -- allRequests -> Holds all items that are requested
     -- builderRequests -> Holds a table for each builder with all items that are requested
     -- remainingRequests -> Holds all items that are requested but not by a builder
     -- item = {name, fingerprint, needed, available, missing, status}
 
-    if mode == "ME" then
+    if mode == "ME" and not skip then
         local cpus = bridge.getCraftingCPUs()
         if not cpus then
             logging.log("ERROR", "No Crafting CPUs found, ME system not working?")
@@ -323,35 +325,16 @@ function getInputs()
             end
         end
     end
-    local rawAllItems = bridge.listItems()
-    -- logging.log("DEBUG", "All requests: " .. textutils.serialize(allRequests))
-    -- logging.log("DEBUG", "All items: " .. textutils.serialize(rawAllItems))
-    if not rawAllItems then
-        logging.log("ERROR", "No items found, ME/RS system not working?")
-        return
-    end
-    for _, item in ipairs(rawAllItems) do
-        for _, requestedItem in ipairs(allRequests) do
-            if item.fingerprint == requestedItem.fingerprint then
-                local status = "a"
-                if item.amount < requestedItem.needed then
-                    if bridge.isItemCrafting({fingerprint=item.fingerprint}) then
-                        status = "c"
-                    else
-                        status = "m"
-                    end
-                end
-                requestedItem.status = status
-                requestedItem.available = item.amount
-                if item.amount < requestedItem.needed then
-                    requestedItem.missing = requestedItem.needed - item.amount
-                else
-                    requestedItem.missing = 0
-                end
-            end
+    if not skip and mode ~= "DP" then
+        local rawAllItems = bridge.listItems()
+        -- logging.log("DEBUG", "All requests: " .. textutils.serialize(allRequests))
+        -- logging.log("DEBUG", "All items: " .. textutils.serialize(rawAllItems))
+        if not rawAllItems then
+            logging.log("ERROR", "No items found, ME/RS system not working?")
+            return
         end
-        for _, builder in ipairs(builders) do
-            for _, requestedItem in ipairs(builderRequests[builder.id].items) do
+        for _, item in ipairs(rawAllItems) do
+            for _, requestedItem in ipairs(allRequests) do
                 if item.fingerprint == requestedItem.fingerprint then
                     local status = "a"
                     if item.amount < requestedItem.needed then
@@ -367,6 +350,27 @@ function getInputs()
                         requestedItem.missing = requestedItem.needed - item.amount
                     else
                         requestedItem.missing = 0
+                    end
+                end
+            end
+            for _, builder in ipairs(builders) do
+                for _, requestedItem in ipairs(builderRequests[builder.id].items) do
+                    if item.fingerprint == requestedItem.fingerprint then
+                        local status = "a"
+                        if item.amount < requestedItem.needed then
+                            if bridge.isItemCrafting({fingerprint=item.fingerprint}) then
+                                status = "c"
+                            else
+                                status = "m"
+                            end
+                        end
+                        requestedItem.status = status
+                        requestedItem.available = item.amount
+                        if item.amount < requestedItem.needed then
+                            requestedItem.missing = requestedItem.needed - item.amount
+                        else
+                            requestedItem.missing = 0
+                        end
                     end
                 end
             end
@@ -469,13 +473,15 @@ end
 function update ()
     -- Get inputs
     builders, builderCount = getBuilders()
-    if bridge.getEnergyUsage() then
-        getInputs()
-    else
+    if mode ~= "DP" and bridge ~= nil and bridge.getEnergyUsage() then
+        getInputs(false)
+    elseif mode ~= "DP" then
         logging.log("ERROR", "ME/RS system not working")
         logging.log("INFO", "Retrying in 10 seconds")
         timerID = os.startTimer(10)
         return
+    elseif mode == "DP" then
+        getInputs(true) -- skip the bridge part
     end
     -- Update display
     if displayMode then
