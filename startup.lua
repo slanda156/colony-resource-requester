@@ -1,10 +1,3 @@
--- -- Logging configuration
--- logFile = "colony.log" -- The file to log to
--- logMode = "overwrite" -- append, overwrite
--- logLevel = "INFO" -- DEBUG, INFO, WARNING, ERROR
--- logTimeSource = "local" -- ingame: The in-game time, local: The server time, utc: UTC time
--- logTimeFormat = true -- false: 12h, true: 24h
-
 -- Runtime configuration
 updateInterval = 30 -- in seconds
 forceHeadless = false -- Force headless mode
@@ -143,8 +136,6 @@ function setUpDisplay(mon)
     widgets.autoButton = Button.new(width / 2 + 4, 1, 1, 5, "Auto", nil, mon)
     widgets.autoButton.active = true
     logging.log("DEBUG", "Added button: " .. widgets.autoButton.label)
-    -- widgets.refreshButton = Button.new(width / 2 + 9, 1, 1, 5, "Refresh", callbackRefresh, mon)
-    -- logging.log("DEBUG", "Added button: " .. widgets.refreshButton.label)
     widgets.exitButton = Button.new(width / 2 + 17, 1, 1, 5, "Exit", function() running = false end, mon)
     logging.log("DEBUG", "Added button: " .. widgets.exitButton.label)
     widgets.allGroup = Group.new(3, "All", mon)
@@ -155,8 +146,6 @@ function setUpDisplay(mon)
         widgets[builder.name] = group
         logging.log("DEBUG", "Added group: " .. builder.name)
     end
-    -- widgets.generalGroup = Group.new(5, "General", mon)
-    -- logging.log("DEBUG", "Added group: " .. widgets.generalGroup.label)
 end
 
 function updateDisplay (mon)
@@ -199,16 +188,8 @@ function updateDisplay (mon)
                     end
                 end
             end
-            -- widgets[index].line = nextLine
             i = i + 1
         until i == builderCount
-        -- widgets.generalGroup:clear()
-        -- widgets.generalGroup.line = nextLine
-        -- for _, item in ipairs(remainingRequests) do
-        --     if item then
-        --         widgets.generalGroup:addItem({item.name, item.needed, item.available, item.missing, item.status})
-        --     end
-        -- end
         for _, widget in pairs(widgets) do
             widget:render()
         end
