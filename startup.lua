@@ -151,6 +151,7 @@ function setUpDisplay(mon)
     logging.log("DEBUG", "Added group: " .. widgets.allGroup.label)
     for i, builder in ipairs(builders) do
         local group = Group.new(3 + i, builder.name .. " (lvl" .. builder.lvl .. ")", mon)
+        group.collapsed = true
         widgets[builder.name] = group
         logging.log("DEBUG", "Added group: " .. builder.name)
     end
