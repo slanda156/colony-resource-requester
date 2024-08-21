@@ -7,6 +7,27 @@ end
 
 term.clear()
 term.setCursorPos(1, 1)
+
+print("Do you want to update the installer? (y/n)")
+io.input(io.stdin)
+local updateInstallerInput = io.read()
+if updateInstallerInput == "y" then
+    print("Which branch would you like to install?\n[0]: main\n[1]: dev")
+    io.input(io.stdin)
+    local branchInput = io.read()
+    delFile("install.lua")
+    if branchInput == "0" then -- main
+        shell.run("wget", "https://raw.githubusercontent.com/slanda156/colony-resource-requester/main/install.lua", "install.lua")
+    elseif branchInput == "1" then -- dev
+        shell.run("wget", "https://raw.githubusercontent.com/slanda156/colony-resource-requester/dev/install.lua", "install.lua")
+    else -- invalid
+        print("Invalid branch")
+        return
+    end
+    shell.run("install.lua")
+    return
+end
+
 print("Which branch would you like to install?\n[0]: main\n[1]: dev")
 io.input(io.stdin)
 local branchInput = io.read()
