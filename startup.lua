@@ -323,7 +323,7 @@ function getInputs()
                 end
             end
             if not skipped then
-                local item = {name=itemRequest.displayName, fingerprint=itemRequest.fingerprint, needed=itemRequest.count}
+                local item = {name=itemRequest.displayName, fingerprint=itemRequest.fingerprint, needed=itemRequest.count * request.count}
                 table.insert(allRequests, item)
             end
         end
