@@ -32,6 +32,7 @@ print("Which branch would you like to install?\n[0]: main\n[1]: dev")
 io.input(io.stdin)
 local branchInput = io.read()
 local codes = {}
+-- ToDo Change codes from def to main when making a pull request
 if branchInput == "0" then -- main
     codes["startup.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/main/startup.lua", true}
     codes["src/widgets.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/main/src/widgets.lua", true}
@@ -41,6 +42,7 @@ elseif branchInput == "1" then -- dev
     codes["startup.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/dev/startup.lua", true}
     codes["src/widgets.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/dev/src/widgets.lua", true}
     codes["src/logging.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/dev/src/logging.lua", true}
+    codes["src/function.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/dev/src/function.lua", true}
     codes["logging.json"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/dev/logging.json", false}
 else -- invalid
     print("Invalid branch")
