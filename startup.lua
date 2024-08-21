@@ -497,7 +497,7 @@ function update ()
 end
 
 function handleEvents ()
-    while true do
+    while running do
         local event, p1, p2, p3, p4, p5 = os.pullEventRaw()
         if event == "terminate" then
             running = false
@@ -533,25 +533,27 @@ end
 -- Start up
 VERSION = "0.2.0"
 logging.log("INFO", "Starting up, v" .. VERSION)
+running = true
 timerID = 0
 iteration = 0
 currentTab = 0
+builders = {}
+builderCount = 0
 startupSuccess = true
 os.setComputerLabel("Colony Resource Requester")
 getPeripherals() -- Get all peripherals
-builders, builderCount = getBuilders()
 if displayMode then
     setUpDisplay(monitor)
 end
 if not startupSuccess then
     logging.log("ERROR", "Startup failed")
+    running = false
 else
-    running = true
     logging.log("INFO", "Startup successful")
+    timerID = os.startTimer(1)
+    handleEvents()
 end
 
-timerID = os.startTimer(1)
-handleEvents()
 
 if wifi then
     wifi.closeAll()
