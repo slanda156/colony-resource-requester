@@ -136,8 +136,6 @@ function setUpDisplay(mon)
     widgets.autoButton = Button.new(width / 2 + 4, 1, 1, 5, "Auto", nil, mon)
     widgets.autoButton.active = true
     logging.log("DEBUG", "Added button: " .. widgets.autoButton.label)
-    widgets.exitButton = Button.new(width / 2 + 17, 1, 1, 5, "Exit", function() running = false end, mon)
-    logging.log("DEBUG", "Added button: " .. widgets.exitButton.label)
     widgets.allGroup = Group.new(3, "All", mon)
     logging.log("DEBUG", "Added group: " .. widgets.allGroup.label)
     for i, builder in ipairs(builders) do
