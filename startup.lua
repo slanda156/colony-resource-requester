@@ -392,21 +392,6 @@ function getInputs()
             end
         end
     end
-    -- Removed do to too many items
-    -- for _, builder in ipairs(builders) do
-    --     for _, builderItem in ipairs(builderRequests[builder.id]) do
-    --         local found = false
-    --         for _, item in ipairs(allRequests) do
-    --             if item.fingerprint == builderItem.fingerprint then
-    --                 found = true
-    --                 break
-    --             end
-    --         end
-    --         if not found then
-    --             table.insert(allRequests, builderItem)
-    --         end
-    --     end
-    -- end
     for _, item in ipairs(allRequests) do
         local remaining = true
         for _, builder in ipairs(builders) do
@@ -547,7 +532,7 @@ if logMode == "overwrite" then
 end
 -- Start up
 VERSION = "0.2.0"
-logging.log("INFO", "Starting up, " .. VERSION)
+logging.log("INFO", "Starting up, v" .. VERSION)
 timerID = 0
 iteration = 0
 currentTab = 0
