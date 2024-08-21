@@ -1,4 +1,4 @@
-function checkArgs()
+function checkArgs(args)
     if args["-h"] or args["--help"] then
         printHelp()
         args["-h"] = nil
@@ -40,7 +40,7 @@ function delFile(file)
 end
 
 local args = {...}
-checkArgs()
+checkArgs(args)
 
 term.clear()
 term.setCursorPos(1, 1)
