@@ -175,7 +175,13 @@ function Button.new(x, y, width, height, label, callback, mon)
     self.x = x
     self.y = y
     self.width = width
+    if self.width < string.len(label) then
+        self.width = string.len(label)
+    end
     self.height = height
+    if self.height < 1 then
+        self.height = 1
+    end
     self.label = label
     self.callback = callback
     self.active = false
@@ -191,11 +197,26 @@ function Button:render()
     else
         self.monitor.setBackgroundColor(colors.red)
     end
-    self.monitor.write(self.label)
+    local space = string.rep(" ", math.ceil((self.width - string.len(self.label)) / 2))
+    if self.height > 1 then
+        local i = 0
+        repeat
+            self.monitor.write(string.rep(" ", self.width))
+            i = i + 1
+        until i >= math.floor(self.height / 2)
+    end
+    self.monitor.write(space .. self.label .. space)
+    if math.mod(self.height, 2) == 0 then
+        local i = 0
+        repeat
+            self.monitor.write(string.rep(" ", self.width))
+            i = i + 1
+        until i >= math.floor(self.height / 2)
+    end
 end
 
 function Button:clicked(x, y)
-    if x >= self.x and x <= self.x + self.width and y >= self.y and y <= self.y + self.height then
+    if x >= self.x and x <= self.x + self.width - 1 and y >= self.y and y <= self.y + self.height - 1 then
         logging.log("DEBUG", "Button clicked: " .. self.label)
         if self.callback then
             self.callback()
