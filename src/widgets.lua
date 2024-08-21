@@ -1,4 +1,5 @@
 logging = require("src/logging")
+strFuncs = require("src/function").strFuncs
 
 local Group = {}
 Group.__index = Group
@@ -135,13 +136,16 @@ function Group:render()
                 else
                     self.monitor.setTextColor(colors.pink)
                 end
+                local needed = strFuncs.compInt(item[2])
+                local available = strFuncs.compInt(item[3])
+                local missing = strFuncs.compInt(item[4])
                 self.monitor.write("    " .. item[1])
                 self.monitor.write(string.rep(" ", 25 - string.len(item[1])))
-                self.monitor.write(" | " .. item[2])
-                self.monitor.write(string.rep(" ", 5 - string.len(tostring(item[2]))))
-                self.monitor.write(" | " .. item[3])
-                self.monitor.write(string.rep(" ", 5 - string.len(tostring(item[3]))))
-                self.monitor.write(" | " .. item[4])
+                self.monitor.write("|" .. needed)
+                self.monitor.write(string.rep(" ", 6 - string.len(tostring(needed))))
+                self.monitor.write("|" .. available)
+                self.monitor.write(string.rep(" ", 6 - string.len(tostring(available))))
+                self.monitor.write("|" .. missing)
                 self.monitor.write(string.rep(" ", width))
             end
         end
