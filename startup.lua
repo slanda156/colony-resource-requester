@@ -165,7 +165,7 @@ function updateDisplay (mon)
     resetDisplay(mon)
     -- Title | Auto Button | Status
     mon.setBackgroundColor(colors.gray)
-    mon.setTextColor(colors.white)
+    mon.setTextColor(colors.black)
     mon.setCursorPos(1, 1)
     mon.write("Colony Resource Requester" .. string.rep(" ", width))
     mon.setCursorPos(width - 2, 1)
