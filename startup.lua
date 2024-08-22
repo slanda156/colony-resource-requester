@@ -99,7 +99,7 @@ function getPeripherals ()
                 end
             end
         end
-        if wifi ~= nil then
+        if wifi == nil then
             logging.log("WARNING", "Wirless modem not found")
         else
             wifi.open(wifiSendChannel)
