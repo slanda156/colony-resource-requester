@@ -336,9 +336,18 @@ function getInputs(skip)
         end
     end
     if not skip and mode ~= "DP" then
-        local rawAllItems = bridge.listItems()
-        -- logging.log("DEBUG", "All requests: " .. textutils.serialize(allRequests))
-        -- logging.log("DEBUG", "All items: " .. textutils.serialize(rawAllItems))
+        local rawAllItems = {}
+        for _, request in ipairs(allRequests) do
+            local fingerprint = request.fingerprint
+            local item, err = bridge.getItem({fingerprint=fingerprint})
+            if item then
+                table.insert(rawAllItems, item)
+            elseif err then
+                logging.log("DEBUG", "Couldn't get item: " .. request.name .. " | Error: " .. err)
+            else
+                logging.log("ERROR", "Couldn't get item: " .. request.name .. " | Bridge error")
+            end
+        end
         if not rawAllItems then
             logging.log("ERROR", "No items found, ME/RS system not working?")
             return
