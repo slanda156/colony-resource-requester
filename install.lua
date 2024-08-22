@@ -106,6 +106,7 @@ if branchInput == "1" then -- main
     codes["startup.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/main/startup.lua", true}
     codes["src/widgets.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/main/src/widgets.lua", true}
     codes["src/logging.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/main/src/logging.lua", true}
+    codes["src/function.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/main/src/function.lua", true}
     codes["logging.json"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/main/logging.json", false}
 elseif branchInput == "2" then -- dev
     codes["startup.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/dev/startup.lua", true}
