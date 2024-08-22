@@ -25,9 +25,13 @@ All necessary files will be donwloaded
 * Fix bugs
 
 ## Release History
+* 0.2.0
+   * Major Improvements to the installer
+   * QOL Improvements
+   * Bug Fixes 
 
-* 0.0.1
-    * Work in progress
+* 0.1.0
+ * Initial Release
 
 # Meta
 
