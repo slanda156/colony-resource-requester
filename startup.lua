@@ -164,7 +164,7 @@ function updateDisplay (mon)
     local maxLines = height - 3
     resetDisplay(mon)
     -- Title | Auto Button | Status
-    mon.setBackgroundColor(colors.gray)
+    mon.setBackgroundColor(colors.lightGray)
     mon.setTextColor(colors.black)
     mon.setCursorPos(1, 1)
     mon.write("Colony Resource Requester" .. string.rep(" ", width))
@@ -265,12 +265,14 @@ function getBuilders()
     local orders = {}
     for _, order in ipairs(colony.getWorkOrders()) do
         if order.builder ~= nil then
-            orders[order.builder] = order
+            local index = tostring(order.builder.x) .. "," .. tostring(order.builder.y) .. "," .. tostring(order.builder.z)
+            orders[index] = order
         end
     end
     for _, building in ipairs(buildings) do
         if building.type == "builder" then
-            table.insert(builders, {name="Builder " .. i, lvl=building.level, pos=building.location, order=orders[building.location], id=i})
+            local index = tostring(building.location.x) .. "," .. tostring(building.location.y) .. "," .. tostring(building.location.z)
+            table.insert(builders, {name="Builder " .. i, lvl=building.level, pos=building.location, order=orders[index], id=i})
             i = i + 1
         end
     end
@@ -305,9 +307,7 @@ function getInputs(skip)
         end
         -- Get current build order of each builder
         if builder.order and builder.order ~= {} then
-            for _, order in builder.order do
-                builderRequests[builder.id].order = order
-            end
+            builderRequests[builder.id].order = builder.order
         end
         local builderResources = colony.getBuilderResources(builder.pos)
         for _, builderRequest in ipairs(builderResources) do

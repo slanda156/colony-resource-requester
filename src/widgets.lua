@@ -102,15 +102,22 @@ function Group:render()
     self.monitor.setCursorPos(1, self.line)
     local orderMsg = ""
     if self.order ~= nil and self.order ~= {} and self.order ~= "" then
-        if self.order.workOrderType == "BUIDLING" then
-            oderMsg = oderMsg .. "[B]"
+        if self.order.workOrderType == "BUILD" then
+            orderMsg = orderMsg .. "[B]"
         elseif self.order.workOrderType == "UPGRADE" then
-            oderMsg = oderMsg .. "[U]"
+            orderMsg = orderMsg .. "[U]"
         elseif self.order.workOrderType == "REPAIR" then
-            oderMsg = oderMsg .. "[R]"
+            orderMsg = orderMsg .. "[R]"
+        else
+            orderMsg = orderMsg .. "[?]"
+            logging.log("ERROR", "Unknown work order type: " .. self.order.workOrderType)
         end
         orderMsg = orderMsg .. " " .. self.order.buildingName
-        orderMsg = orderMsg .. " (lvl" .. self.order.targetLevel .. ")"
+        if self.order.workOrderType == "UPGRADE" then
+            orderMsg = orderMsg .. " (lvl" .. self.order.targetLevel - 1 .. " -> lvl" .. self.order.targetLevel .. ")"
+        else
+            orderMsg = orderMsg .. " (lvl" .. self.order.targetLevel .. ")"
+        end
     end
     if self.collapsed then
         collSign = "+"
@@ -120,7 +127,7 @@ function Group:render()
     if orderMsg == "" then
         self.monitor.write(collSign .. self.size .. " " .. self.label .. ":" .. string.rep(" ", width))
     else
-        self.monitor.write(collSign .. self.size .. " " .. self.label .. ":" .. "(" .. orderMsg .. ")" .. string.rep(" ", width))
+        self.monitor.write(collSign .. self.size .. " " .. self.label .. ": " .. orderMsg .. string.rep(" ", width))
     end
     if not self.collapsed then
         self.monitor.setBackgroundColor(colors.lightGray)
