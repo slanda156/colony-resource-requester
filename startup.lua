@@ -149,10 +149,10 @@ function setUpDisplay(mon)
     widgets.autoButton = Button.new(width * (3 / 4), 1, 6, 1, "Auto", nil, mon)
     widgets.autoButton.active = true
     logging.log("DEBUG", "Added button: " .. widgets.autoButton.label)
-    widgets.allGroup = Group.new(3, "All", mon)
+    widgets.allGroup = Group.new(4, "All", mon)
     logging.log("DEBUG", "Added group: " .. widgets.allGroup.label)
     for i, builder in ipairs(builders) do
-        local group = Group.new(3 + i, builder.name .. " (lvl" .. builder.lvl .. ")", mon)
+        local group = Group.new(4 + i, builder.name .. " (lvl" .. builder.lvl .. ")", mon)
         group.collapsed = true
         widgets[builder.name] = group
         logging.log("DEBUG", "Added group: " .. builder.name)
@@ -172,7 +172,18 @@ function updateDisplay (mon)
     mon.write(mode)
     -- Requests | Work Orders | Citizens | Visitors | Buildings | Research | Stats
     if currentTab == 0 then
-        -- Item Name | Requested | Available | Missing | Status
+        -- Item Name | Requested | Available | Missing
+        mon.setBackgroundColor(colors.gray)
+        mon.setTextColor(colors.black)
+        mon.setCursorPos(1, 3)
+        mon.write("    " .. "Item Name")
+        mon.write(string.rep(" ", (width - 25) - string.len("Item Name")))
+        mon.write("|" .. "Req")
+        mon.write(string.rep(" ", 6 - string.len("Req")))
+        mon.write("|" .. "Avail")
+        mon.write(string.rep(" ", 6 - string.len("Avail")))
+        mon.write("|" .. "Miss")
+        mon.write(string.rep(" ", 6 - string.len("Miss")))
         widgets.allGroup:clear()
         if allRequests ~= nil and allRequests ~= {} then
             for _, item in ipairs(allRequests) do
