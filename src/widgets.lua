@@ -1,4 +1,5 @@
 logging = require("src/logging")
+strFuncs = require("src/function").strFuncs
 
 local Group = {}
 Group.__index = Group
@@ -11,6 +12,7 @@ function Group.new(line, label, mon)
     self.label = label
     self.collapsed = false
     self.size = 0
+    self.order = ""
     self.items = {}
     self.monitor = mon
     return self
@@ -22,6 +24,19 @@ function Group:updateLines()
     else
         self.lines = 1 + self.size
     end
+end
+
+function Group:setOrder(order)
+    self.order = order
+    -- .id: string 	The work order's id
+    -- .priority: number 	The priority of the work order
+    -- .workOrderType: string 	The type of work order
+    -- .changed: boolean 	If the work order changed
+    -- .isClaimed: boolean 	Whether the work order has been claimed
+    -- .builder: table 	The position of the builder (has x, y, z)
+    -- .buildingName: string 	The name of the building
+    -- .type: string 	The type of the building
+    -- .targetLevel: number 	The building's target level
 end
 
 function Group:addItem(item)
@@ -85,10 +100,36 @@ function Group:render()
     self.monitor.setBackgroundColor(colors.gray)
     self.monitor.setTextColor(colors.black)
     self.monitor.setCursorPos(1, self.line)
+    local orderMsg = ""
+    if self.order ~= nil and self.order ~= {} and self.order ~= "" then
+        if self.order.workOrderType == "BUILD" then
+            orderMsg = orderMsg .. "[B]"
+        elseif self.order.workOrderType == "UPGRADE" then
+            orderMsg = orderMsg .. "[U]"
+        elseif self.order.workOrderType == "REPAIR" then
+            orderMsg = orderMsg .. "[R]"
+        else
+            orderMsg = orderMsg .. "[?]"
+            logging.log("ERROR", "Unknown work order type: " .. self.order.workOrderType)
+        end
+        orderMsg = orderMsg .. " " .. self.order.buildingName
+        if self.order.workOrderType == "UPGRADE" then
+            orderMsg = orderMsg .. " (lvl" .. self.order.targetLevel - 1 .. " -> lvl" .. self.order.targetLevel .. ")"
+        else
+            orderMsg = orderMsg .. " (lvl" .. self.order.targetLevel .. ")"
+        end
+    end
     if self.collapsed then
-        self.monitor.write("+ " .. self.size .. " " .. self.label .. ":" .. string.rep(" ", width))
+        collSign = "+"
     else
-        self.monitor.write("- " .. self.size .. " " .. self.label .. ":" .. string.rep(" ", width))
+        collSign = "-"
+    end
+    if orderMsg == "" then
+        self.monitor.write(collSign .. self.size .. " " .. self.label .. ":" .. string.rep(" ", width))
+    else
+        self.monitor.write(collSign .. self.size .. " " .. self.label .. ": " .. orderMsg .. string.rep(" ", width))
+    end
+    if not self.collapsed then
         self.monitor.setBackgroundColor(colors.lightGray)
         for i, item in ipairs(self.items) do
             if item[1] then
@@ -107,14 +148,17 @@ function Group:render()
                 else
                     self.monitor.setTextColor(colors.pink)
                 end
+                local needed = strFuncs.compInt(item[2])
+                local available = strFuncs.compInt(item[3])
+                local missing = strFuncs.compInt(item[4])
                 self.monitor.write("    " .. item[1])
-                self.monitor.write(string.rep(" ", 25 - string.len(item[1])))
-                self.monitor.write(" | " .. item[2])
-                self.monitor.write(string.rep(" ", 5 - string.len(tostring(item[2]))))
-                self.monitor.write(" | " .. item[3])
-                self.monitor.write(string.rep(" ", 5 - string.len(tostring(item[3]))))
-                self.monitor.write(" | " .. item[4])
-                self.monitor.write(string.rep(" ", width))
+                self.monitor.write(string.rep(" ", (width - 25) - string.len(item[1])))
+                self.monitor.write("|" .. needed)
+                self.monitor.write(string.rep(" ", 6 - string.len(tostring(needed))))
+                self.monitor.write("|" .. available)
+                self.monitor.write(string.rep(" ", 6 - string.len(tostring(available))))
+                self.monitor.write("|" .. missing)
+                self.monitor.write(string.rep(" ", 6 - string.len(tostring(available))))
             end
         end
     end
@@ -138,7 +182,13 @@ function Button.new(x, y, width, height, label, callback, mon)
     self.x = x
     self.y = y
     self.width = width
+    if self.width < string.len(label) then
+        self.width = string.len(label)
+    end
     self.height = height
+    if self.height < 1 then
+        self.height = 1
+    end
     self.label = label
     self.callback = callback
     self.active = false
@@ -154,11 +204,26 @@ function Button:render()
     else
         self.monitor.setBackgroundColor(colors.red)
     end
-    self.monitor.write(self.label)
+    local space = string.rep(" ", math.ceil((self.width - string.len(self.label)) / 2))
+    if self.height > 1 then
+        local i = 0
+        repeat
+            self.monitor.write(string.rep(" ", self.width))
+            i = i + 1
+        until i >= math.floor(self.height / 2)
+    end
+    self.monitor.write(space .. self.label .. space)
+    if math.mod(self.height, 2) == 0 then
+        local i = 0
+        repeat
+            self.monitor.write(string.rep(" ", self.width))
+            i = i + 1
+        until i >= math.floor(self.height / 2)
+    end
 end
 
 function Button:clicked(x, y)
-    if x >= self.x and x <= self.x + self.width and y >= self.y and y <= self.y + self.height then
+    if x >= self.x - 1 and x < self.x + self.width and y >= self.y and y < self.y + self.height then -- self.x - 1, unsure why
         logging.log("DEBUG", "Button clicked: " .. self.label)
         if self.callback then
             self.callback()

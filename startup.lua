@@ -1,10 +1,3 @@
--- -- Logging configuration
--- logFile = "colony.log" -- The file to log to
--- logMode = "overwrite" -- append, overwrite
--- logLevel = "INFO" -- DEBUG, INFO, WARNING, ERROR
--- logTimeSource = "local" -- ingame: The in-game time, local: The server time, utc: UTC time
--- logTimeFormat = true -- false: 12h, true: 24h
-
 -- Runtime configuration
 updateInterval = 30 -- in seconds
 forceHeadless = false -- Force headless mode
@@ -71,9 +64,9 @@ function getPeripherals ()
         end
     end
     if not mode then
-        logging.log("ERROR", "No storage bridge found")
+        logging.log("WARNING", "No storage bridge found")
         if displayMode == 0 then
-            logging.log("INFO", "Running in headless mode, stopping")
+            logging.log("ERROR", "Running in headless mode, stopping")
             startupSuccess = false
             return
         end
@@ -93,11 +86,21 @@ function getPeripherals ()
         end
     end
     if wifiEnable then
-        wifi = peripheral.find("modem")
-        if not wifi then
-            logging.log("WARNING", "Modem not found")
-        elseif not wifi.isWireless() then
-            logging.log("WARNING", "Modem not wireless")
+        local modems = peripheral.find("modem")
+        if not modems then
+            wifi = nil
+        else
+            local foundWifi = false
+            for _, modem in ipairs(modems) do
+                if modem.isWireless() then
+                    wifi = modem
+                    foundWifi = true
+                    break
+                end
+            end
+        end
+        if wifi == nil then
+            logging.log("WARNING", "Wirless modem not found")
         else
             wifi.open(wifiSendChannel)
             logging.log("INFO", "WIFI enabled")
@@ -137,26 +140,23 @@ end
 
 function setUpDisplay(mon)
     resetDisplay(mon)
+    if startupSuccess then
+        builders, builderCount = getBuilders()
+    end
     local width, height = mon.getSize()
     logging.log("DEBUG", "Monitor size: " .. width .. "x" .. height)
     widgets = {}
-    widgets.autoButton = Button.new(width / 2 + 4, 1, 1, 5, "Auto", nil, mon)
+    widgets.autoButton = Button.new(width * (3 / 4), 1, 6, 1, "Auto", nil, mon)
     widgets.autoButton.active = true
     logging.log("DEBUG", "Added button: " .. widgets.autoButton.label)
-    -- widgets.refreshButton = Button.new(width / 2 + 9, 1, 1, 5, "Refresh", callbackRefresh, mon)
-    -- logging.log("DEBUG", "Added button: " .. widgets.refreshButton.label)
-    widgets.exitButton = Button.new(width / 2 + 17, 1, 1, 5, "Exit", function() running = false end, mon)
-    logging.log("DEBUG", "Added button: " .. widgets.exitButton.label)
-    widgets.allGroup = Group.new(3, "All", mon)
+    widgets.allGroup = Group.new(4, "All", mon)
     logging.log("DEBUG", "Added group: " .. widgets.allGroup.label)
     for i, builder in ipairs(builders) do
-        local group = Group.new(3 + i, builder.name .. " (lvl" .. builder.lvl .. ")", mon)
+        local group = Group.new(4 + i, builder.name .. " (lvl" .. builder.lvl .. ")", mon)
         group.collapsed = true
         widgets[builder.name] = group
         logging.log("DEBUG", "Added group: " .. builder.name)
     end
-    -- widgets.generalGroup = Group.new(5, "General", mon)
-    -- logging.log("DEBUG", "Added group: " .. widgets.generalGroup.label)
 end
 
 function updateDisplay (mon)
@@ -164,19 +164,32 @@ function updateDisplay (mon)
     local maxLines = height - 3
     resetDisplay(mon)
     -- Title | Auto Button | Status
-    mon.setBackgroundColor(colors.gray)
-    mon.setTextColor(colors.white)
+    mon.setBackgroundColor(colors.lightGray)
+    mon.setTextColor(colors.black)
     mon.setCursorPos(1, 1)
     mon.write("Colony Resource Requester" .. string.rep(" ", width))
     mon.setCursorPos(width - 2, 1)
     mon.write(mode)
     -- Requests | Work Orders | Citizens | Visitors | Buildings | Research | Stats
     if currentTab == 0 then
-        -- Item Name | Requested | Available | Missing | Status
+        -- Item Name | Requested | Available | Missing
+        mon.setBackgroundColor(colors.gray)
+        mon.setTextColor(colors.black)
+        mon.setCursorPos(1, 3)
+        mon.write("    " .. "Item Name")
+        mon.write(string.rep(" ", (width - 25) - string.len("Item Name")))
+        mon.write("|" .. "Req")
+        mon.write(string.rep(" ", 6 - string.len("Req")))
+        mon.write("|" .. "Avail")
+        mon.write(string.rep(" ", 6 - string.len("Avail")))
+        mon.write("|" .. "Miss")
+        mon.write(string.rep(" ", 6 - string.len("Miss")))
         widgets.allGroup:clear()
-        for _, item in ipairs(allRequests) do
-            if item then
-                widgets.allGroup:addItem({item.name, item.needed, item.available, item.missing, item.status})
+        if allRequests ~= nil and allRequests ~= {} then
+            for _, item in ipairs(allRequests) do
+                if item then
+                    widgets.allGroup:addItem({item.name, item.needed, item.available, item.missing, item.status})
+                end
             end
         end
         local i = 0
@@ -188,8 +201,9 @@ function updateDisplay (mon)
                 if widget.type == "group" then
                     if key == index then
                         widget:clear()
-                        for _, item in ipairs(builderRequests[i]) do
-                            if item then
+                        widget:setOrder(builderRequests[i].order)
+                        for _, item in ipairs(builderRequests[i].items) do
+                            if item ~= nil then
                                 widget:addItem({item.name, item.needed, item.available, item.missing, item.status})
                             end
                         end
@@ -199,16 +213,8 @@ function updateDisplay (mon)
                     end
                 end
             end
-            -- widgets[index].line = nextLine
             i = i + 1
         until i == builderCount
-        -- widgets.generalGroup:clear()
-        -- widgets.generalGroup.line = nextLine
-        -- for _, item in ipairs(remainingRequests) do
-        --     if item then
-        --         widgets.generalGroup:addItem({item.name, item.needed, item.available, item.missing, item.status})
-        --     end
-        -- end
         for _, widget in pairs(widgets) do
             widget:render()
         end
@@ -226,7 +232,7 @@ function updateDisplay (mon)
     end
     mon.setTextColor(colors.white)
     mon.setCursorPos(width - 13, height)
-    mon.write(VERSION)
+    mon.write("v" .. VERSION)
     mon.setCursorPos(width - 5, height)
     mon.write(updateInterval - iteration .. "s")
     mon.setCursorPos(width - 1, height)
@@ -256,22 +262,29 @@ function getBuilders()
     local buildings = colony.getBuildings()
     local builders = {}
     local i = 0
+    local orders = {}
+    for _, order in ipairs(colony.getWorkOrders()) do
+        if order.builder ~= nil then
+            local index = tostring(order.builder.x) .. "," .. tostring(order.builder.y) .. "," .. tostring(order.builder.z)
+            orders[index] = order
+        end
+    end
     for _, building in ipairs(buildings) do
         if building.type == "builder" then
-            table.insert(builders, {name="Builder " .. i, lvl=building.level, pos=building.location, id=i})
+            local index = tostring(building.location.x) .. "," .. tostring(building.location.y) .. "," .. tostring(building.location.z)
+            table.insert(builders, {name="Builder " .. i, lvl=building.level, pos=building.location, order=orders[index], id=i})
             i = i + 1
         end
     end
     return builders, i
 end
 
-function getInputs()
+function getInputs(skip)
     -- allRequests -> Holds all items that are requested
     -- builderRequests -> Holds a table for each builder with all items that are requested
-    -- remainingRequests -> Holds all items that are requested but not by a builder
     -- item = {name, fingerprint, needed, available, missing, status}
 
-    if mode == "ME" then
+    if mode == "ME" and not skip then
         local cpus = bridge.getCraftingCPUs()
         if not cpus then
             logging.log("ERROR", "No Crafting CPUs found, ME system not working?")
@@ -287,31 +300,49 @@ function getInputs()
 
     allRequests = {}
     builderRequests = {}
-    remainingRequests = {}
 
     for _, builder in ipairs(builders) do
         if not builderRequests[builder.id] then
-            builderRequests[builder.id] = {}
+            builderRequests[builder.id] = {items={}}
+        end
+        -- Get current build order of each builder
+        if builder.order and builder.order ~= {} then
+            builderRequests[builder.id].order = builder.order
         end
         local builderResources = colony.getBuilderResources(builder.pos)
         for _, builderRequest in ipairs(builderResources) do
-            if builderRequest.status == "DONT_HAVE" and builderRequest.needed - builderRequest.available > 0 then
-                builderItem = builderRequest.item
-                builderItem.count = builderItem.count * (builderRequest.needed - builderRequest.available)
+            builderItem = builderRequest.item
+            builderItem.needed = builderRequest.needed
+            builderItem.available = builderRequest.available
+            builderItem.missing = builderRequest.needed - builderRequest.available
+            if builderItem.missing < 0 then
+                builderItem.missing = 0
             end
-            if builderItem then
-                local skipped = false
-                for _, existingItem in ipairs(builderRequests[builder.id]) do
-                    if existingItem.fingerprint == builderItem.fingerprint then
-                        existingItem.needed = existingItem.needed + builderItem.count
-                        skipped = true
-                        break
-                    end
+            if builderItem.missing > 0 then
+                if builderItem.missing <= builderRequest.delivering then
+                    builderItem.status = "c"
+                else
+                    builderItem.status = "m"
                 end
-                if not skipped then
-                    local item = {name=builderItem.displayName, fingerprint=builderItem.fingerprint, needed=builderItem.count}
-                    table.insert(builderRequests[builder.id], item)
+            else
+                builderItem.status = "a"
+            end
+            local skipped = false
+            for _, existingItem in ipairs(builderRequests[builder.id].items) do
+                if existingItem.fingerprint == builderItem.fingerprint then
+                    skipped = true
+                    break
                 end
+            end
+            if not skipped then
+                local item = {
+                    name=builderItem.displayName,
+                    fingerprint=builderItem.fingerprint,
+                    needed=builderItem.needed, available=builderItem.available,
+                    missing=builderItem.missing,
+                    status=builderItem.status
+                }
+                table.insert(builderRequests[builder.id].items, item)
             end
         end
     end
@@ -333,35 +364,25 @@ function getInputs()
             end
         end
     end
-    local rawAllItems = bridge.listItems()
-    -- logging.log("DEBUG", "All requests: " .. textutils.serialize(allRequests))
-    -- logging.log("DEBUG", "All items: " .. textutils.serialize(rawAllItems))
-    if not rawAllItems then
-        logging.log("ERROR", "No items found, ME/RS system not working?")
-        return
-    end
-    for _, item in ipairs(rawAllItems) do
-        for _, requestedItem in ipairs(allRequests) do
-            if item.fingerprint == requestedItem.fingerprint then
-                local status = "a"
-                if item.amount < requestedItem.needed then
-                    if bridge.isItemCrafting({fingerprint=item.fingerprint}) then
-                        status = "c"
-                    else
-                        status = "m"
-                    end
-                end
-                requestedItem.status = status
-                requestedItem.available = item.amount
-                if item.amount < requestedItem.needed then
-                    requestedItem.missing = requestedItem.needed - item.amount
-                else
-                    requestedItem.missing = 0
-                end
+    if not skip and mode ~= "DP" then
+        local rawAllItems = {}
+        for _, request in ipairs(allRequests) do
+            local fingerprint = request.fingerprint
+            local item, err = bridge.getItem({fingerprint=fingerprint})
+            if item then
+                table.insert(rawAllItems, item)
+            elseif err then
+                logging.log("DEBUG", "Couldn't get item: " .. request.name .. " | Error: " .. err)
+            else
+                logging.log("ERROR", "Couldn't get item: " .. request.name .. " | Bridge error")
             end
         end
-        for _, builder in ipairs(builders) do
-            for _, requestedItem in ipairs(builderRequests[builder.id]) do
+        if not rawAllItems then
+            logging.log("ERROR", "No items found, ME/RS system not working?")
+            return
+        end
+        for _, item in ipairs(rawAllItems) do
+            for _, requestedItem in ipairs(allRequests) do
                 if item.fingerprint == requestedItem.fingerprint then
                     local status = "a"
                     if item.amount < requestedItem.needed then
@@ -391,46 +412,6 @@ function getInputs()
             end
         end
     end
-    for _, builder in ipairs(builders) do
-        for _, item in ipairs(builderRequests[builder.id]) do
-            if item then
-                if not item.status then
-                    item.status = "m"
-                    item.available = 0
-                    item.missing = item.needed
-                end
-            end
-        end
-    end
-    -- Removed do to too many items
-    -- for _, builder in ipairs(builders) do
-    --     for _, builderItem in ipairs(builderRequests[builder.id]) do
-    --         local found = false
-    --         for _, item in ipairs(allRequests) do
-    --             if item.fingerprint == builderItem.fingerprint then
-    --                 found = true
-    --                 break
-    --             end
-    --         end
-    --         if not found then
-    --             table.insert(allRequests, builderItem)
-    --         end
-    --     end
-    -- end
-    for _, item in ipairs(allRequests) do
-        local remaining = true
-        for _, builder in ipairs(builders) do
-            for _, builderItem in ipairs(builderRequests[builder.id]) do
-                if item.fingerprint == builderItem.fingerprint then
-                    remaining = false
-                    break
-                end
-            end
-        end
-        if remaining then
-            table.insert(remainingRequests, item)
-        end
-    end
 end
 
 function moveItems()
@@ -452,21 +433,35 @@ function moveItems()
                     logging.log("DEBUG", "Item is already crafting: " .. item.name .. " (" .. item.fingerprint .. ")")
                 else
                     if mode == "RS" then
-                        logging.log("DEBUG", "Crafting item: " .. item.name .. " (" .. item.fingerprint .. ")" .. " Amount: " .. item.missing)
-                        bridge.craftItem({fingerprint=item.fingerprint, count=item.missing})
-                        sleep(0.1)
-                        if not bridge.isItemCrafting({fingerprint=item.fingerprint}) then
-                            logging.log("WARNING", "Couldn't craft item")
-                        end
-                    elseif mode == "ME" then
-                        if freeCPUs > 0 then
+                        local itemName = bridge.getItem({fingerprint=item.fingerprint}).name
+                        if bridge.isItemCraftable({name=itemName}) then
                             logging.log("DEBUG", "Crafting item: " .. item.name .. " (" .. item.fingerprint .. ")" .. " Amount: " .. item.missing)
                             bridge.craftItem({fingerprint=item.fingerprint, count=item.missing})
                             sleep(0.1)
-                            if bridge.isItemCrafting({fingerprint=item.fingerprint}) then
-                                freeCPUs = freeCPUs - 1
+                            if not bridge.isItemCrafting({fingerprint=item.fingerprint}) then
+                                logging.log("DEBUG", "Couldn't craft item")
+                            end
+                        else
+                            logging.log("DEBUG", "Item not craftable: " .. item.name .. " | " .. itemName .. " (" .. item.fingerprint .. ")")
+                        end
+                    elseif mode == "ME" then
+                        if freeCPUs > 0 then
+                            local itemName = bridge.getItem({fingerprint=item.fingerprint}).name
+                            if bridge.isItemCraftable({name=itemName}) then
+                                logging.log("DEBUG", "Crafting item: " .. item.name .. " (" .. item.fingerprint .. ")" .. " Amount: " .. item.missing)
+                                bridge.craftItem({fingerprint=item.fingerprint, count=item.missing})
+                                sleep(0.1)
+                                if bridge.isItemCrafting({fingerprint=item.fingerprint}) then
+                                    freeCPUs = freeCPUs - 1
+                                else
+                                    logging.log("DEBUG", "Couldn't craft item")
+                                end
                             else
-                                logging.log("WARNING", "Couldn't craft item")
+                                if itemName == nil then
+                                    logging.log("DEBUG", "Item has no recipe: " .. item.name .. " (" .. item.fingerprint .. ")")
+                                else
+                                    logging.log("DEBUG", "Item not craftable: " .. item.name .. " | "  .. itemName .. " (" .. item.fingerprint .. ")")
+                                end
                             end
                         else
                             logging.log("DEBUG", "No free Crafting CPUs available")
@@ -493,13 +488,16 @@ end
 
 function update ()
     -- Get inputs
-    if bridge.getEnergyUsage() then
-        getInputs()
-    else
+    builders, builderCount = getBuilders()
+    if mode ~= "DP" and bridge ~= nil and bridge.getEnergyUsage() then
+        getInputs(false)
+    elseif mode ~= "DP" then
         logging.log("ERROR", "ME/RS system not working")
         logging.log("INFO", "Retrying in 10 seconds")
         timerID = os.startTimer(10)
         return
+    elseif mode == "DP" then
+        getInputs(true) -- skip the bridge part
     end
     -- Update display
     if displayMode then
@@ -521,7 +519,7 @@ function update ()
 end
 
 function handleEvents ()
-    while true do
+    while running do
         local event, p1, p2, p3, p4, p5 = os.pullEventRaw()
         if event == "terminate" then
             running = false
@@ -555,27 +553,29 @@ if logMode == "overwrite" then
     file.close()
 end
 -- Start up
-VERSION = "0.1.0"
-logging.log("INFO", "Starting up, " .. VERSION)
+VERSION = "0.2.0"
+logging.log("INFO", "Starting up, v" .. VERSION)
+running = true
 timerID = 0
 iteration = 0
 currentTab = 0
+builders = {}
+builderCount = 0
 startupSuccess = true
 os.setComputerLabel("Colony Resource Requester")
 getPeripherals() -- Get all peripherals
-builders, builderCount = getBuilders()
 if displayMode then
     setUpDisplay(monitor)
 end
 if not startupSuccess then
     logging.log("ERROR", "Startup failed")
+    running = false
 else
-    running = true
     logging.log("INFO", "Startup successful")
+    timerID = os.startTimer(1)
+    handleEvents()
 end
 
-timerID = os.startTimer(1)
-handleEvents()
 
 if wifi then
     wifi.closeAll()
