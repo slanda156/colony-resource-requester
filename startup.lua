@@ -38,9 +38,7 @@ function getPeripherals ()
         logging.log("INFO", "Running in headless mode (forced)")
     end
     local meBridge = peripheral.find("meBridge")
-    if not meBridge then
-        logging.log("WARNING", "ME Bridge not found")
-    else
+    if meBridge then
         bridge = meBridge
         mode = "ME"
         if not bridge.getEnergyUsage() then
@@ -51,9 +49,7 @@ function getPeripherals ()
     end
     if not mode then
         local rsBridge = peripheral.find("rsBridge")
-        if not rsBridge then
-            logging.log("WARNING", "RS Bridge not found")
-        else
+        if rsBridge then
             bridge = rsBridge
             mode = "RS"
             if not bridge.getEnergyUsage() then
@@ -64,7 +60,7 @@ function getPeripherals ()
         end
     end
     if not mode then
-        logging.log("WARNING", "No storage bridge found")
+        logging.log("WARNING", "No ME/RS bridge found")
         if displayMode == 0 then
             logging.log("ERROR", "Running in headless mode, stopping")
             startupSuccess = false
