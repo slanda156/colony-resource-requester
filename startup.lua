@@ -269,7 +269,6 @@ end
 function getInputs(skip)
     -- allRequests -> Holds all items that are requested
     -- builderRequests -> Holds a table for each builder with all items that are requested
-    -- remainingRequests -> Holds all items that are requested but not by a builder
     -- item = {name, fingerprint, needed, available, missing, status}
 
     if mode == "ME" and not skip then
@@ -288,7 +287,6 @@ function getInputs(skip)
 
     allRequests = {}
     builderRequests = {}
-    remainingRequests = {}
 
     for _, builder in ipairs(builders) do
         if not builderRequests[builder.id] then
@@ -302,23 +300,38 @@ function getInputs(skip)
         end
         local builderResources = colony.getBuilderResources(builder.pos)
         for _, builderRequest in ipairs(builderResources) do
-            if builderRequest.status == "DONT_HAVE" and builderRequest.needed - builderRequest.available > 0 then
-                builderItem = builderRequest.item
-                builderItem.count = builderRequest.needed - (builderRequest.available + builderRequest.delivering)
+            builderItem = builderRequest.item
+            builderItem.needed = builderRequest.needed
+            builderItem.available = builderRequest.available
+            builderItem.missing = builderRequest.needed - builderRequest.available
+            if builderItem.missing < 0 then
+                builderItem.missing = 0
             end
-            if builderItem then
-                local skipped = false
-                for _, existingItem in ipairs(builderRequests[builder.id].items) do
-                   if existingItem.fingerprint == builderItem.fingerprint then
-                    --    existingItem.needed = existingItem.needed + builderItem.count
-                       skipped = true
-                       break
-                   end
+            if builderItem.missing > 0 then
+                if builderItem.missing <= builderRequest.delivering then
+                    builderItem.status = "c"
+                else
+                    builderItem.status = "m"
                 end
-                if not skipped then
-                    local item = {name=builderItem.displayName, fingerprint=builderItem.fingerprint, needed=builderItem.count}
-                    table.insert(builderRequests[builder.id].items, item)
+            else
+                builderItem.status = "a"
+            end
+            local skipped = false
+            for _, existingItem in ipairs(builderRequests[builder.id].items) do
+                if existingItem.fingerprint == builderItem.fingerprint then
+                    skipped = true
+                    break
                 end
+            end
+            if not skipped then
+                local item = {
+                    name=builderItem.displayName,
+                    fingerprint=builderItem.fingerprint,
+                    needed=builderItem.needed, available=builderItem.available,
+                    missing=builderItem.missing,
+                    status=builderItem.status
+                }
+                table.insert(builderRequests[builder.id].items, item)
             end
         end
     end
@@ -377,27 +390,6 @@ function getInputs(skip)
                     end
                 end
             end
-            for _, builder in ipairs(builders) do
-                for _, requestedItem in ipairs(builderRequests[builder.id].items) do
-                    if item.fingerprint == requestedItem.fingerprint then
-                        local status = "a"
-                        if item.amount < requestedItem.needed then
-                            if bridge.isItemCrafting({fingerprint=item.fingerprint}) then
-                                status = "c"
-                            else
-                                status = "m"
-                            end
-                        end
-                        requestedItem.status = status
-                        requestedItem.available = item.amount
-                        if item.amount < requestedItem.needed then
-                            requestedItem.missing = requestedItem.needed - item.amount
-                        else
-                            requestedItem.missing = 0
-                        end
-                    end
-                end
-            end
         end
     end
     for _, item in ipairs(allRequests) do
@@ -407,31 +399,6 @@ function getInputs(skip)
                 item.available = 0
                 item.missing = item.needed
             end
-        end
-    end
-    for _, builder in ipairs(builders) do
-        for _, item in ipairs(builderRequests[builder.id].items) do
-            if item then
-                if not item.status then
-                    item.status = "m"
-                    item.available = 0
-                    item.missing = item.needed
-                end
-            end
-        end
-    end
-    for _, item in ipairs(allRequests) do
-        local remaining = true
-        for _, builder in ipairs(builders) do
-            for _, builderItem in ipairs(builderRequests[builder.id].items) do
-                if item.fingerprint == builderItem.fingerprint then
-                    remaining = false
-                    break
-                end
-            end
-        end
-        if remaining then
-            table.insert(remainingRequests, item)
         end
     end
 end
