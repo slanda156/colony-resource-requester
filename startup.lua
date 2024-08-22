@@ -2,7 +2,7 @@
 updateInterval = 30 -- in seconds
 forceHeadless = false -- Force headless mode
 -- WIFI is WIP and not working
-wifiEnable = true -- Enable wifi
+wifiEnable = false -- Enable wifi
 wifiSendChannel = 1 -- The channel to use for the wifi messages
 wifiReplyChannel = 600 -- The channel to use for the wifi replies
 
