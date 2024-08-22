@@ -86,11 +86,21 @@ function getPeripherals ()
         end
     end
     if wifiEnable then
-        wifi = peripheral.find("modem")
-        if not wifi then
-            logging.log("WARNING", "Modem not found")
-        elseif not wifi.isWireless() then
-            logging.log("WARNING", "Modem not wireless")
+        local modems = peripheral.find("modem")
+        if not modems then
+            wifi = nil
+        else
+            local foundWifi = false
+            for _, modem in ipairs(modems) do
+                if modem.isWireless() then
+                    wifi = modem
+                    foundWifi = true
+                    break
+                end
+            end
+        end
+        if wifi ~= nil then
+            logging.log("WARNING", "Wirless modem not found")
         else
             wifi.open(wifiSendChannel)
             logging.log("INFO", "WIFI enabled")
