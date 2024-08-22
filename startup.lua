@@ -140,6 +140,9 @@ end
 
 function setUpDisplay(mon)
     resetDisplay(mon)
+    if startupSuccess then
+        builders, builderCount = getBuilders()
+    end
     local width, height = mon.getSize()
     logging.log("DEBUG", "Monitor size: " .. width .. "x" .. height)
     widgets = {}
@@ -188,8 +191,8 @@ function updateDisplay (mon)
                     if key == index then
                         widget:clear()
                         widget:setOrder(builderRequests[i].order)
-                        for _, item in ipairs(builderRequests[i]) do
-                            if item then
+                        for _, item in ipairs(builderRequests[i].items) do
+                            if item ~= nil then
                                 widget:addItem({item.name, item.needed, item.available, item.missing, item.status})
                             end
                         end
@@ -250,7 +253,9 @@ function getBuilders()
     local i = 0
     local orders = {}
     for _, order in ipairs(colony.getWorkOrders()) do
-        orders[order.builder] = order
+        if order.builder ~= nil then
+            orders[order.builder] = order
+        end
     end
     for _, building in ipairs(buildings) do
         if building.type == "builder" then
@@ -299,16 +304,16 @@ function getInputs(skip)
         for _, builderRequest in ipairs(builderResources) do
             if builderRequest.status == "DONT_HAVE" and builderRequest.needed - builderRequest.available > 0 then
                 builderItem = builderRequest.item
-                builderItem.count = builderItem.count * (builderRequest.needed - builderRequest.available)
+                builderItem.count = builderRequest.needed - (builderRequest.available + builderRequest.delivering)
             end
             if builderItem then
                 local skipped = false
                 for _, existingItem in ipairs(builderRequests[builder.id].items) do
-                    if existingItem.fingerprint == builderItem.fingerprint then
-                        existingItem.needed = existingItem.needed + builderItem.count
-                        skipped = true
-                        break
-                    end
+                   if existingItem.fingerprint == builderItem.fingerprint then
+                    --    existingItem.needed = existingItem.needed + builderItem.count
+                       skipped = true
+                       break
+                   end
                 end
                 if not skipped then
                     local item = {name=builderItem.displayName, fingerprint=builderItem.fingerprint, needed=builderItem.count}
