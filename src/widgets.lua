@@ -192,7 +192,7 @@ end
 local Button = {}
 Button.__index = Button
 
-function Button.new(x, y, width, height, label, callback, arg, mon)
+function Button.new(x, y, width, height, label, callback, arg, switch, mon)
     local self = setmetatable({}, Button)
     self.type = "button"
     self.x = x
@@ -247,7 +247,9 @@ function Button:clicked(x, y)
         if self.callback then
             self.callback(self.callbackArg)
         end
-        self.active = not self.active
+        if self.switch then
+            self.active = not self.active
+        end
         os.queueEvent("display_update")
         return true
     end
