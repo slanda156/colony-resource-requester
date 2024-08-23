@@ -157,7 +157,6 @@ function getPeripherals ()
             end
         end
     end
-    sleep(1)
 end
 
 function resetDisplay(mon)
@@ -595,6 +594,10 @@ function handleEvents ()
             end
         elseif event == "timer" then
             update()
+        elseif event == "monitor_resize" then
+            if displayMode then
+                setUpDisplay(monitor)
+            end
         end
     end
 end
