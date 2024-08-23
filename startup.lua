@@ -549,7 +549,7 @@ if logMode == "overwrite" then
     file.close()
 end
 -- Start up
-VERSION = "0.2.1"
+VERSION = "0.2.1-dev"
 logging.log("INFO", "Starting up, v" .. VERSION)
 running = true
 timerID = 0

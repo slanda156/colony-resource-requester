@@ -101,23 +101,30 @@ function Group:render()
     self.monitor.setTextColor(colors.black)
     self.monitor.setCursorPos(1, self.line)
     local orderMsg = ""
+    local orderMsgStart = ""
+    local orderMsgEnd = ""
     if self.order ~= nil and self.order ~= {} and self.order ~= "" then
         if self.order.workOrderType == "BUILD" then
-            orderMsg = orderMsg .. "[B]"
+            orderMsgStart = orderMsgStart .. "[B]"
         elseif self.order.workOrderType == "UPGRADE" then
-            orderMsg = orderMsg .. "[U]"
+            orderMsgStart = orderMsgStart .. "[U]"
         elseif self.order.workOrderType == "REPAIR" then
-            orderMsg = orderMsg .. "[R]"
+            orderMsgStart = orderMsgStart .. "[R]"
         else
-            orderMsg = orderMsg .. "[?]"
+            orderMsgStart = orderMsgStart .. "[?]"
             logging.log("ERROR", "Unknown work order type: " .. self.order.workOrderType)
         end
-        orderMsg = orderMsg .. " " .. self.order.buildingName
         if self.order.workOrderType == "UPGRADE" then
-            orderMsg = orderMsg .. " (lvl" .. self.order.targetLevel - 1 .. " -> lvl" .. self.order.targetLevel .. ")"
+            orderMsgEnd = orderMsgEnd .. " (lvl" .. self.order.targetLevel - 1 .. " -> lvl" .. self.order.targetLevel .. ")"
         else
-            orderMsg = orderMsg .. " (lvl" .. self.order.targetLevel .. ")"
+            orderMsgEnd = orderMsgEnd .. " (lvl" .. self.order.targetLevel .. ")"
         end
+        local maxBuildingNameLength = width - (5 + string.len(tostring(self.size)) + string.len(self.label) + string.len(orderMsgStart) + string.len(orderMsgEnd))
+        local buildingName = self.order.buildingName
+        if string.len(buildingName) > maxBuildingNameLength then
+            buildingName = string.sub(buildingName, 1, maxBuildingNameLength - 3) .. "..."
+        end
+        orderMsg = orderMsgStart .. " " .. buildingName .. orderMsgEnd
     end
     if self.collapsed then
         collSign = "+"
@@ -148,17 +155,26 @@ function Group:render()
                 else
                     self.monitor.setTextColor(colors.pink)
                 end
+                local spacing = 7
+                local maxLabelLength = width - 4 - (spacing * 3)
+                local label = item[1]
+                label = string.gsub(label, "%[", "")
+                label = string.gsub(label, "%]", "")
+                if string.len(label) > maxLabelLength then
+                    label = string.sub(label, 1, maxLabelLength - 3) .. "..."
+                end
                 local needed = strFuncs.compInt(item[2])
                 local available = strFuncs.compInt(item[3])
                 local missing = strFuncs.compInt(item[4])
-                self.monitor.write("    " .. item[1])
-                self.monitor.write(string.rep(" ", (width - 25) - string.len(item[1])))
+                self.monitor.write(string.rep(" ", width))
+                self.monitor.setCursorPos(4, self.line + i)
+                self.monitor.write(label)
+                self.monitor.setCursorPos(width - (spacing * 3 - 1), self.line + i)
                 self.monitor.write("|" .. needed)
-                self.monitor.write(string.rep(" ", 6 - string.len(tostring(needed))))
+                self.monitor.setCursorPos(width - (spacing * 2 - 1), self.line + i)
                 self.monitor.write("|" .. available)
-                self.monitor.write(string.rep(" ", 6 - string.len(tostring(available))))
+                self.monitor.setCursorPos(width - (spacing * 1 - 1), self.line + i)
                 self.monitor.write("|" .. missing)
-                self.monitor.write(string.rep(" ", 6 - string.len(tostring(available))))
             end
         end
     end
