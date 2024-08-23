@@ -254,7 +254,7 @@ function callbackRefresh ()
     logging.log("DEBUG", "Refresh callback")
     getInputs()
     local success = true
-    if widgets.autoButton.active and then
+    if widgets.autoButton.active then
         success = moveItems()
     end
     if displayMode then
