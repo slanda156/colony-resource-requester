@@ -209,6 +209,8 @@ function Button.new(x, y, width, height, label, callback, mon)
     self.callback = callback
     self.active = false
     self.monitor = mon
+    self.backgroundActive = colors.green
+    self.backgroundInactive = colors.red
     return self
 end
 
@@ -216,9 +218,9 @@ function Button:render()
     self.monitor.setTextColor(colors.black)
     self.monitor.setCursorPos(self.x, self.y)
     if self.active then
-        self.monitor.setBackgroundColor(colors.green)
+        self.monitor.setBackgroundColor(self.backgroundActive)
     else
-        self.monitor.setBackgroundColor(colors.red)
+        self.monitor.setBackgroundColor(self.backgroundInactive)
     end
     local space = string.rep(" ", math.ceil((self.width - string.len(self.label)) / 2))
     if self.height > 1 then
