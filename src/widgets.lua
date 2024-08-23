@@ -192,7 +192,7 @@ end
 local Button = {}
 Button.__index = Button
 
-function Button.new(x, y, width, height, label, callback, mon)
+function Button.new(x, y, width, height, label, callback, arg, mon)
     local self = setmetatable({}, Button)
     self.type = "button"
     self.x = x
@@ -207,6 +207,7 @@ function Button.new(x, y, width, height, label, callback, mon)
     end
     self.label = label
     self.callback = callback
+    self.callbackArg = arg
     self.active = false
     self.monitor = mon
     self.backgroundActive = colors.green
@@ -244,7 +245,7 @@ function Button:clicked(x, y)
     if x >= self.x - 1 and x < self.x + self.width and y >= self.y and y < self.y + self.height then -- self.x - 1, unsure why
         logging.log("DEBUG", "Button clicked: " .. self.label)
         if self.callback then
-            self.callback()
+            self.callback(self.callbackArg)
         end
         self.active = not self.active
         os.queueEvent("display_update")
