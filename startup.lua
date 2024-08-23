@@ -20,9 +20,19 @@ function getPeripherals ()
             logging.log("INFO", "Running in headless mode")
             displayMode = false
         else
+            monitor.setBackgroundColor(colors.black)
+            monitor.setTextColor(colors.white)
+            monitor.clear()
+
+            monitor.setTextScale(0.5)
             local width, height = monitor.getSize()
-            if width < 14 or height < 10 then
-                logging.log("WARNING", "Monitor too small, at least 3x3 required")
+            logging.log("DEBUG", "Monitor size: " .. width .. "x" .. height)
+            if width < 57 or height < 24 then
+                monitor.setCursorPos(1, 1)
+                monitor.write("Monitor too small")
+                monitor.setCursorPos(1, 2)
+                monitor.write("At least 3x2 required")
+                logging.log("WARNING", "Monitor too small, at least 3x2 required")
                 logging.log("DEBUG", "Monitor size: " .. width .. "x" .. height)
                 logging.log("INFO", "Running in headless mode")
                 displayMode = false
@@ -61,7 +71,7 @@ function getPeripherals ()
     end
     if not mode then
         logging.log("WARNING", "No ME/RS bridge found")
-        if displayMode == 0 then
+        if not displayMode then
             logging.log("ERROR", "Running in headless mode, stopping")
             startupSuccess = false
             return
