@@ -179,37 +179,37 @@ function setUpDisplay(mon)
     widgets.autoButton.active = true
     logging.log("DEBUG", "Added button: " .. widgets.autoButton.label)
     -- Scroll buttons
-    widgets.scrollUpButton = Button.new(1, 3, 2, 1, "/\\", function() callbackScroll(true) end, mon)
+    widgets.scrollUpButton = Button.new(1, 3, 2, 1, "/\\", callbackScrol, true, mon)
     logging.log("DEBUG", "Added button: " .. widgets.scrollUpButton.label)
-    widgets.scrollDownButton = Button.new(3, 3, 2, 1, "\\/", 1  function() callbackScroll(false) end, mon)
+    widgets.scrollDownButton = Button.new(3, 3, 2, 1, "\\/", 1  callbackScroll, false, mon)
     logging.log("DEBUG", "Added button: " .. widgets.scrollDownButton.label)
     -- Tabs
-    widgets.requestsTab = Button.new(5, 3, 8, 1, "Requests", function() callbackTab(0) end, mon)
+    widgets.requestsTab = Button.new(5, 3, 8, 1, "Requests", callbackTab, 0, mon)
     widgets.requestsTab.active = true
     widgets.requestsTab.backgroundActive = colors.gray
     widgets.requestsTab.backgroundInactive = colors.lightGray
     logging.log("DEBUG", "Added button: " .. widgets.requestsTab.label)
-    widgets.workOrdersTab = Button.new(13, 3, 10, 1, "Work Orders", function() callbackTab(1) end, mon)
+    widgets.workOrdersTab = Button.new(13, 3, 10, 1, "Work Orders", callbackTab, 1, mon)
     widgets.workOrdersTab.backgroundActive = colors.gray
     widgets.workOrdersTab.backgroundInactive = colors.lightGray
     logging.log("DEBUG", "Added button: " .. widgets.workOrdersTab.label)
-    widgets.citizensTab = Button.new(24, 3, 8, 1, "Citizens", function() callbackTab(2) end, mon)
+    widgets.citizensTab = Button.new(24, 3, 8, 1, "Citizens", callbackTab, 2, mon)
     widgets.citizensTab.backgroundActive = colors.gray
     widgets.citizensTab.backgroundInactive = colors.lightGray
     logging.log("DEBUG", "Added button: " .. widgets.citizensTab.label)
-    widgets.visitorsTab = Button.new(32, 3, 8, 1, "Visitors", function() callbackTab(3) end, mon)
+    widgets.visitorsTab = Button.new(32, 3, 8, 1, "Visitors", callbackTab, 3, mon)
     widgets.visitorsTab.backgroundActive = colors.gray
     widgets.visitorsTab.backgroundInactive = colors.lightGray
     logging.log("DEBUG", "Added button: " .. widgets.visitorsTab.label)
-    widgets.buildingsTab = Button.new(40, 3, 10, 1, "Buildings", function() callbackTab(4) end, mon)
+    widgets.buildingsTab = Button.new(40, 3, 10, 1, "Buildings", callbackTab, 4, mon)
     widgets.buildingsTab.backgroundActive = colors.gray
     widgets.buildingsTab.backgroundInactive = colors.lightGray
     logging.log("DEBUG", "Added button: " .. widgets.buildingsTab.label)
-    widgets.researchTab = Button.new(51, 3, 8, 1, "Research", function() callbackTab(5) end, mon)
+    widgets.researchTab = Button.new(51, 3, 8, 1, "Research", callbackTab, 5, mon)
     widgets.researchTab.backgroundActive = colors.gray
     widgets.researchTab.backgroundInactive = colors.lightGray
     logging.log("DEBUG", "Added button: " .. widgets.researchTab.label)
-    widgets.statsTab = Button.new(59, 3, 5, 1, "Stats", function() callbackTab(6) end, mon)
+    widgets.statsTab = Button.new(59, 3, 5, 1, "Stats", callbackTab, 6, mon)
     widgets.statsTab.backgroundActive = colors.gray
     widgets.statsTab.backgroundInactive = colors.lightGray
     logging.log("DEBUG", "Added button: " .. widgets.statsTab.label)
