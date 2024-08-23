@@ -11,6 +11,23 @@ logging = require("src/logging")
 Button = require("src/widgets").Button
 Group = require("src/widgets").Group
 
+function checkIfDirect (per)
+    if per == nil then
+        logging.log("ERROR", "Peripheral not found")
+        return false
+    end
+    if type(per) == "string" then
+        per = peripheral.wrap(per)
+    end
+    local sides = {"top", "bottom", "left", "right", "front", "back"}
+    for _, side in ipairs(sides) do
+        if per == side then
+            return true
+        end
+    end
+    return false
+end
+
 function getPeripherals ()
     if not forceHeadless then
         monitor = peripheral.find("monitor")
@@ -132,6 +149,12 @@ function getPeripherals ()
         if not found then
             mode = "NI"
             logging.log("ERROR", "No output inventory found")
+        else
+            local bridgeConnectionType = checkIfDirect(bridge)
+            if not checkIfDirect(outputInventory) == bridgeConnectionType then
+                logging.log("ERROR", "Output inventory not connected to the same network as the ME/RS bridge")
+                mode = "NI"
+            end
         end
     end
     sleep(1)
@@ -431,7 +454,7 @@ function getInputs(skip)
 end
 
 function moveItems()
-    if mode == "ME" or mode == "RS" or mode = "NI" then
+    if mode == "ME" or mode == "RS" or mode == "NI" then
         local empty = true
         if peripheral.call(outputInventory, "list") == nil then
             logging.log("ERROR", "Output Inventory not found")
