@@ -13,6 +13,7 @@ A clear and concise description of what the bug is.
 **To Reproduce**
 If reproduceble run with the logging as DEBUG
 Steps to reproduce the behavior:
+
 1. Go to '...'
 2. Click on '....'
 3. Scroll down to '....'

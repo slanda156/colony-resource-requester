@@ -2,7 +2,7 @@
 updateInterval = 30 -- in seconds
 forceHeadless = false -- Force headless mode
 -- WIFI is WIP and not working
-wifiEnable = true -- Enable wifi
+wifiEnable = false -- Enable wifi
 wifiSendChannel = 1 -- The channel to use for the wifi messages
 wifiReplyChannel = 600 -- The channel to use for the wifi replies
 
@@ -10,6 +10,23 @@ wifiReplyChannel = 600 -- The channel to use for the wifi replies
 logging = require("src/logging")
 Button = require("src/widgets").Button
 Group = require("src/widgets").Group
+
+function checkIfDirect (per)
+    if per == nil then
+        logging.log("ERROR", "Peripheral not found")
+        return false
+    end
+    if type(per) == "string" then
+        per = peripheral.wrap(per)
+    end
+    local sides = {"top", "bottom", "left", "right", "front", "back"}
+    for _, side in ipairs(sides) do
+        if per == side then
+            return true
+        end
+    end
+    return false
+end
 
 function getPeripherals ()
     if not forceHeadless then
@@ -20,9 +37,19 @@ function getPeripherals ()
             logging.log("INFO", "Running in headless mode")
             displayMode = false
         else
+            monitor.setBackgroundColor(colors.black)
+            monitor.setTextColor(colors.white)
+            monitor.clear()
+
+            monitor.setTextScale(0.5)
             local width, height = monitor.getSize()
-            if width < 14 or height < 10 then
-                logging.log("WARNING", "Monitor too small, at least 3x3 required")
+            logging.log("DEBUG", "Monitor size: " .. width .. "x" .. height)
+            if width < 57 or height < 24 then
+                monitor.setCursorPos(1, 1)
+                monitor.write("Monitor too small")
+                monitor.setCursorPos(1, 2)
+                monitor.write("At least 3x2 required")
+                logging.log("WARNING", "Monitor too small, at least 3x2 required")
                 logging.log("DEBUG", "Monitor size: " .. width .. "x" .. height)
                 logging.log("INFO", "Running in headless mode")
                 displayMode = false
@@ -38,9 +65,7 @@ function getPeripherals ()
         logging.log("INFO", "Running in headless mode (forced)")
     end
     local meBridge = peripheral.find("meBridge")
-    if not meBridge then
-        logging.log("WARNING", "ME Bridge not found")
-    else
+    if meBridge then
         bridge = meBridge
         mode = "ME"
         if not bridge.getEnergyUsage() then
@@ -51,9 +76,7 @@ function getPeripherals ()
     end
     if not mode then
         local rsBridge = peripheral.find("rsBridge")
-        if not rsBridge then
-            logging.log("WARNING", "RS Bridge not found")
-        else
+        if rsBridge then
             bridge = rsBridge
             mode = "RS"
             if not bridge.getEnergyUsage() then
@@ -64,8 +87,8 @@ function getPeripherals ()
         end
     end
     if not mode then
-        logging.log("WARNING", "No storage bridge found")
-        if displayMode == 0 then
+        logging.log("WARNING", "No ME/RS bridge found")
+        if not displayMode then
             logging.log("ERROR", "Running in headless mode, stopping")
             startupSuccess = false
             return
@@ -126,9 +149,14 @@ function getPeripherals ()
         if not found then
             mode = "NI"
             logging.log("ERROR", "No output inventory found")
+        else
+            local bridgeConnectionType = checkIfDirect(bridge)
+            if not checkIfDirect(outputInventory) == bridgeConnectionType then
+                logging.log("ERROR", "Output inventory not connected to the same network as the ME/RS bridge")
+                mode = "NI"
+            end
         end
     end
-    sleep(1)
 end
 
 function resetDisplay(mon)
@@ -146,7 +174,7 @@ function setUpDisplay(mon)
     local width, height = mon.getSize()
     logging.log("DEBUG", "Monitor size: " .. width .. "x" .. height)
     widgets = {}
-    widgets.autoButton = Button.new(width * (3 / 4), 1, 6, 1, "Auto", nil, mon)
+    widgets.autoButton = Button.new(width - 9, 1, 6, 1, "Auto", nil, mon)
     widgets.autoButton.active = true
     logging.log("DEBUG", "Added button: " .. widgets.autoButton.label)
     widgets.allGroup = Group.new(4, "All", mon)
@@ -168,6 +196,8 @@ function updateDisplay (mon)
     mon.setTextColor(colors.black)
     mon.setCursorPos(1, 1)
     mon.write("Colony Resource Requester" .. string.rep(" ", width))
+    mon.setCursorPos(width - (10 + string.len("v" .. VERSION)), 1)
+    mon.write("v" .. VERSION)
     mon.setCursorPos(width - 2, 1)
     mon.write(mode)
     -- Requests | Work Orders | Citizens | Visitors | Buildings | Research | Stats
@@ -231,8 +261,6 @@ function updateDisplay (mon)
         mon.write(" Blacklisted")
     end
     mon.setTextColor(colors.white)
-    mon.setCursorPos(width - 13, height)
-    mon.write("v" .. VERSION)
     mon.setCursorPos(width - 5, height)
     mon.write(updateInterval - iteration .. "s")
     mon.setCursorPos(width - 1, height)
@@ -247,15 +275,25 @@ end
 function callbackRefresh ()
     logging.log("DEBUG", "Refresh callback")
     getInputs()
+    local success = true
     if widgets.autoButton.active then
-        moveItems()
+        success = moveItems()
     end
     if displayMode then
         os.queueEvent("display_update")
     end
     iteration = 0
     os.cancelTimer(timerID)
-    timerID = os.startTimer(1)
+    if success == nil or success then
+        timerID = os.startTimer(1)
+    else
+        getPeripherals()
+        if success == nil or success then
+            timerID = os.startTimer(1)
+        else
+            mode = "NI"
+        end
+    end
 end
 
 function getBuilders()
@@ -415,18 +453,26 @@ function getInputs(skip)
 end
 
 function moveItems()
-    if mode == "ME" or mode == "RS" then
+    if mode == "ME" or mode == "RS" or mode == "NI" then
         local empty = true
+        if peripheral.call(outputInventory, "list") == nil then
+            logging.log("ERROR", "Output Inventory not found")
+            return
+        end
         if next(peripheral.call(outputInventory, "list")) ~= nil then
             empty = false
         end
         for _, item in ipairs(allRequests) do
             if item.status == "a" then
-                if empty then
-                    logging.log("DEBUG", "Exporting item: " .. item.name .. " (" .. item.fingerprint .. ")" .. " Amount: " .. item.needed)
-                    bridge.exportItemToPeripheral({fingerprint=item.fingerprint, count=item.needed}, outputInventory)
+                if mode ~= "NI" then
+                    if empty then
+                        logging.log("DEBUG", "Exporting item: " .. item.name .. " (" .. item.fingerprint .. ")" .. " Amount: " .. item.needed)
+                        bridge.exportItemToPeripheral({fingerprint=item.fingerprint, count=item.needed}, outputInventory)
+                    else
+                        logging.log("WARNING", "Ouput Inventory not empty")
+                    end
                 else
-                    logging.log("WARNING", "Ouput Inventory not empty")
+                    logging.log("DEBUG", "Item is available: " .. item.name .. " (" .. item.fingerprint .. "), skipping")
                 end
             elseif item.status == "m" then
                 if bridge.isItemCrafting({fingerprint=item.fingerprint}) then
@@ -505,8 +551,9 @@ function update ()
     end
     -- Update every updateInterval seconds the logic
     if iteration == updateInterval then
+        local success = true
         if widgets.autoButton.active then
-            moveItems()
+            success = moveItems()
         end
         if wifi then
             updateWifi()
@@ -515,7 +562,11 @@ function update ()
     end
     Heartbeat = not Heartbeat
     iteration = iteration + 1
-    timerID = os.startTimer(1)
+    if success == nil or success then
+        timerID = os.startTimer(1)
+    else
+        mode = "NI"
+    end
 end
 
 function handleEvents ()
@@ -543,6 +594,10 @@ function handleEvents ()
             end
         elseif event == "timer" then
             update()
+        elseif event == "monitor_resize" then
+            if displayMode then
+                setUpDisplay(monitor)
+            end
         end
     end
 end
@@ -553,7 +608,7 @@ if logMode == "overwrite" then
     file.close()
 end
 -- Start up
-VERSION = "0.2.0"
+VERSION = "0.2.1"
 logging.log("INFO", "Starting up, v" .. VERSION)
 running = true
 timerID = 0
