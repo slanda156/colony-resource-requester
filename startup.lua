@@ -253,15 +253,25 @@ end
 function callbackRefresh ()
     logging.log("DEBUG", "Refresh callback")
     getInputs()
-    if widgets.autoButton.active then
-        moveItems()
+    local success = true
+    if widgets.autoButton.active and then
+        success = moveItems()
     end
     if displayMode then
         os.queueEvent("display_update")
     end
     iteration = 0
     os.cancelTimer(timerID)
-    timerID = os.startTimer(1)
+    if success == nil or success then
+        timerID = os.startTimer(1)
+    else
+        getPeripherals()
+        if success == nil or success then
+            timerID = os.startTimer(1)
+        else
+            mode = "NI"
+        end
+    end
 end
 
 function getBuilders()
@@ -421,18 +431,26 @@ function getInputs(skip)
 end
 
 function moveItems()
-    if mode == "ME" or mode == "RS" then
+    if mode == "ME" or mode == "RS" or mode = "NI" then
         local empty = true
+        if peripheral.call(outputInventory, "list") == nil then
+            logging.log("ERROR", "Output Inventory not found")
+            return
+        end
         if next(peripheral.call(outputInventory, "list")) ~= nil then
             empty = false
         end
         for _, item in ipairs(allRequests) do
             if item.status == "a" then
-                if empty then
-                    logging.log("DEBUG", "Exporting item: " .. item.name .. " (" .. item.fingerprint .. ")" .. " Amount: " .. item.needed)
-                    bridge.exportItemToPeripheral({fingerprint=item.fingerprint, count=item.needed}, outputInventory)
+                if mode ~= "NI" then
+                    if empty then
+                        logging.log("DEBUG", "Exporting item: " .. item.name .. " (" .. item.fingerprint .. ")" .. " Amount: " .. item.needed)
+                        bridge.exportItemToPeripheral({fingerprint=item.fingerprint, count=item.needed}, outputInventory)
+                    else
+                        logging.log("WARNING", "Ouput Inventory not empty")
+                    end
                 else
-                    logging.log("WARNING", "Ouput Inventory not empty")
+                    logging.log("DEBUG", "Item is available: " .. item.name .. " (" .. item.fingerprint .. "), skipping")
                 end
             elseif item.status == "m" then
                 if bridge.isItemCrafting({fingerprint=item.fingerprint}) then
@@ -511,8 +529,9 @@ function update ()
     end
     -- Update every updateInterval seconds the logic
     if iteration == updateInterval then
+        local success = true
         if widgets.autoButton.active then
-            moveItems()
+            success = moveItems()
         end
         if wifi then
             updateWifi()
@@ -521,7 +540,11 @@ function update ()
     end
     Heartbeat = not Heartbeat
     iteration = iteration + 1
-    timerID = os.startTimer(1)
+    if success == nil or success then
+        timerID = os.startTimer(1)
+    else
+        mode = "NI"
+    end
 end
 
 function handleEvents ()
