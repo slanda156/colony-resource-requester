@@ -173,10 +173,47 @@ function setUpDisplay(mon)
     end
     local width, height = mon.getSize()
     logging.log("DEBUG", "Monitor size: " .. width .. "x" .. height)
+    -- UP | DOWN | Requests | Work Orders | Citizens | Visitors | Buildings | Research | Stats
     widgets = {}
     widgets.autoButton = Button.new(width - 9, 1, 6, 1, "Auto", nil, mon)
     widgets.autoButton.active = true
     logging.log("DEBUG", "Added button: " .. widgets.autoButton.label)
+    -- Scroll buttons
+    widgets.scrollUpButton = Button.new(1, 3, 2, 1, "/\\", function() callbackScroll(true) end, mon)
+    logging.log("DEBUG", "Added button: " .. widgets.scrollUpButton.label)
+    widgets.scrollDownButton = Button.new(3, 3, 2, 1, "\\/", 1  function() callbackScroll(false) end, mon)
+    logging.log("DEBUG", "Added button: " .. widgets.scrollDownButton.label)
+    -- Tabs
+    widgets.requestsTab = Button.new(5, 3, 8, 1, "Requests", function() callbackTab(0) end, mon)
+    widgets.requestsTab.active = true
+    widgets.requestsTab.backgroundActive = colors.gray
+    widgets.requestsTab.backgroundInactive = colors.lightGray
+    logging.log("DEBUG", "Added button: " .. widgets.requestsTab.label)
+    widgets.workOrdersTab = Button.new(13, 3, 10, 1, "Work Orders", function() callbackTab(1) end, mon)
+    widgets.workOrdersTab.backgroundActive = colors.gray
+    widgets.workOrdersTab.backgroundInactive = colors.lightGray
+    logging.log("DEBUG", "Added button: " .. widgets.workOrdersTab.label)
+    widgets.citizensTab = Button.new(24, 3, 8, 1, "Citizens", function() callbackTab(2) end, mon)
+    widgets.citizensTab.backgroundActive = colors.gray
+    widgets.citizensTab.backgroundInactive = colors.lightGray
+    logging.log("DEBUG", "Added button: " .. widgets.citizensTab.label)
+    widgets.visitorsTab = Button.new(32, 3, 8, 1, "Visitors", function() callbackTab(3) end, mon)
+    widgets.visitorsTab.backgroundActive = colors.gray
+    widgets.visitorsTab.backgroundInactive = colors.lightGray
+    logging.log("DEBUG", "Added button: " .. widgets.visitorsTab.label)
+    widgets.buildingsTab = Button.new(40, 3, 10, 1, "Buildings", function() callbackTab(4) end, mon)
+    widgets.buildingsTab.backgroundActive = colors.gray
+    widgets.buildingsTab.backgroundInactive = colors.lightGray
+    logging.log("DEBUG", "Added button: " .. widgets.buildingsTab.label)
+    widgets.researchTab = Button.new(51, 3, 8, 1, "Research", function() callbackTab(5) end, mon)
+    widgets.researchTab.backgroundActive = colors.gray
+    widgets.researchTab.backgroundInactive = colors.lightGray
+    logging.log("DEBUG", "Added button: " .. widgets.researchTab.label)
+    widgets.statsTab = Button.new(59, 3, 5, 1, "Stats", function() callbackTab(6) end, mon)
+    widgets.statsTab.backgroundActive = colors.gray
+    widgets.statsTab.backgroundInactive = colors.lightGray
+    logging.log("DEBUG", "Added button: " .. widgets.statsTab.label)
+    -- Requests groups
     widgets.allGroup = Group.new(4, "All", mon)
     logging.log("DEBUG", "Added group: " .. widgets.allGroup.label)
     for i, builder in ipairs(builders) do
@@ -292,6 +329,55 @@ function callbackRefresh ()
             timerID = os.startTimer(1)
         else
             mode = "NI"
+        end
+    end
+end
+
+function callbackScroll (direction)
+    logging.log("DEBUG", "Scroll callback")
+    if direction then
+        widgets.scrollUpButton.active = false
+        lineOffset = lineOffset + 1
+    else
+        widgets.scrollDownButton.active = false
+        lineOffset = lineOffset - 1
+    end
+    if lineOffset < 0 then
+        lineOffset = 0
+    end
+end
+
+function callbackTab (tab)
+    logging.log("DEBUG", "Tab callback")
+    if tab < 0 or tab > 6 then
+        logging.log("ERROR", "Invalid tab: " .. tab)
+        return
+    end
+    if tab ~= currentTab then
+        lineOffset = 0
+        currentTab = tab
+        logging.log("DEBUG", "Switched to tab: " .. tab)
+        widgets.requestsTab.active = false
+        widgets.workOrdersTab.active = false
+        widgets.citizensTab.active = false
+        widgets.visitorsTab.active = false
+        widgets.buildingsTab.active = false
+        widgets.researchTab.active = false
+        widgets.statsTab.active = false
+        if tab == 0 then
+            widgets.requestsTab.active = true
+        elseif tab == 1 then
+            widgets.workOrdersTab.active = true
+        elseif tab == 2 then
+            widgets.citizensTab.active = true
+        elseif tab == 3 then
+            widgets.visitorsTab.active = true
+        elseif tab == 4 then
+            widgets.buildingsTab.active = true
+        elseif tab == 5 then
+            widgets.researchTab.active = true
+        elseif tab == 6 then
+            widgets.statsTab.active = true
         end
     end
 end
@@ -608,12 +694,13 @@ if logMode == "overwrite" then
     file.close()
 end
 -- Start up
-VERSION = "0.2.1"
+VERSION = "0.3.0-dev"
 logging.log("INFO", "Starting up, v" .. VERSION)
 running = true
 timerID = 0
 iteration = 0
 currentTab = 0
+lineOffset = 0
 builders = {}
 builderCount = 0
 startupSuccess = true
