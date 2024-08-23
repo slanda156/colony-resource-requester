@@ -159,6 +159,63 @@ function getPeripherals ()
     end
 end
 
+
+function callbackRefresh ()
+    logging.log("DEBUG", "Refresh callback")
+    getInputs()
+    local success = true
+    if widgets.autoButton.active then
+        success = moveItems()
+    end
+    if displayMode then
+        os.queueEvent("display_update")
+    end
+    iteration = 0
+    os.cancelTimer(timerID)
+    if success == nil or success then
+        timerID = os.startTimer(1)
+    else
+        getPeripherals()
+        if success == nil or success then
+            timerID = os.startTimer(1)
+        else
+            mode = "NI"
+        end
+    end
+end
+
+function callbackScroll (direction)
+    logging.log("DEBUG", "Scroll callback")
+    if direction then
+        widgets.scrollUpButton.active = false
+        lineOffset = lineOffset + 1
+    else
+        widgets.scrollDownButton.active = false
+        lineOffset = lineOffset - 1
+    end
+    if lineOffset < 0 then
+        lineOffset = 0
+    end
+end
+
+function callbackTab (tab)
+    local maxTabs = 6
+    logging.log("DEBUG", "Tab callback")
+    if tab then
+        currentTab = currentTab - 1
+    else
+        currentTab = currentTab + 1
+    end
+    if currentTab < 0 then
+        currentTab = maxTabs
+    elseif currentTab > maxTabs then
+        currentTab = 0
+    end
+    logging.log("DEBUG", "New tab: " .. currentTab)
+    widgets.tabLeftButton.active = false
+    widgets.tabRightButton.active = false
+end
+
 function resetDisplay(mon)
     mon.setBackgroundColor(colors.black)
     mon.setTextColor(colors.white)
@@ -175,44 +232,23 @@ function setUpDisplay(mon)
     logging.log("DEBUG", "Monitor size: " .. width .. "x" .. height)
     -- UP | DOWN | Requests | Work Orders | Citizens | Visitors | Buildings | Research | Stats
     widgets = {}
-    widgets.autoButton = Button.new(width - 9, 1, 6, 1, "Auto", nil, mon)
+    widgets.autoButton = Button.new(width - 9, 1, 6, 1, "Auto", nil, nil, true, mon)
     widgets.autoButton.active = true
     logging.log("DEBUG", "Added button: " .. widgets.autoButton.label)
     -- Scroll buttons
-    widgets.scrollUpButton = Button.new(1, 3, 2, 1, "/\\", callbackScrol, true, mon)
+    widgets.scrollUpButton = Button.new(2, 2, 4, 1, "/\\", callbackScroll, true, false, mon)
+    widgets.scrollUpButton.backgroundInactive = colors.gray
     logging.log("DEBUG", "Added button: " .. widgets.scrollUpButton.label)
-    widgets.scrollDownButton = Button.new(3, 3, 2, 1, "\\/", 1  callbackScroll, false, mon)
+    widgets.scrollDownButton = Button.new(7, 2, 4, 1, "\\/", callbackScroll, false, false, mon)
+    widgets.scrollDownButton.backgroundInactive = colors.gray
     logging.log("DEBUG", "Added button: " .. widgets.scrollDownButton.label)
     -- Tabs
-    widgets.requestsTab = Button.new(5, 3, 8, 1, "Requests", callbackTab, 0, mon)
-    widgets.requestsTab.active = true
-    widgets.requestsTab.backgroundActive = colors.gray
-    widgets.requestsTab.backgroundInactive = colors.lightGray
-    logging.log("DEBUG", "Added button: " .. widgets.requestsTab.label)
-    widgets.workOrdersTab = Button.new(13, 3, 10, 1, "Work Orders", callbackTab, 1, mon)
-    widgets.workOrdersTab.backgroundActive = colors.gray
-    widgets.workOrdersTab.backgroundInactive = colors.lightGray
-    logging.log("DEBUG", "Added button: " .. widgets.workOrdersTab.label)
-    widgets.citizensTab = Button.new(24, 3, 8, 1, "Citizens", callbackTab, 2, mon)
-    widgets.citizensTab.backgroundActive = colors.gray
-    widgets.citizensTab.backgroundInactive = colors.lightGray
-    logging.log("DEBUG", "Added button: " .. widgets.citizensTab.label)
-    widgets.visitorsTab = Button.new(32, 3, 8, 1, "Visitors", callbackTab, 3, mon)
-    widgets.visitorsTab.backgroundActive = colors.gray
-    widgets.visitorsTab.backgroundInactive = colors.lightGray
-    logging.log("DEBUG", "Added button: " .. widgets.visitorsTab.label)
-    widgets.buildingsTab = Button.new(40, 3, 10, 1, "Buildings", callbackTab, 4, mon)
-    widgets.buildingsTab.backgroundActive = colors.gray
-    widgets.buildingsTab.backgroundInactive = colors.lightGray
-    logging.log("DEBUG", "Added button: " .. widgets.buildingsTab.label)
-    widgets.researchTab = Button.new(51, 3, 8, 1, "Research", callbackTab, 5, mon)
-    widgets.researchTab.backgroundActive = colors.gray
-    widgets.researchTab.backgroundInactive = colors.lightGray
-    logging.log("DEBUG", "Added button: " .. widgets.researchTab.label)
-    widgets.statsTab = Button.new(59, 3, 5, 1, "Stats", callbackTab, 6, mon)
-    widgets.statsTab.backgroundActive = colors.gray
-    widgets.statsTab.backgroundInactive = colors.lightGray
-    logging.log("DEBUG", "Added button: " .. widgets.statsTab.label)
+    widgets.tabLeftButton = Button.new(12, 2, 3, 1, "<", callbackTab, true, false, mon)
+    widgets.tabLeftButton.backgroundInactive = colors.gray
+    logging.log("DEBUG", "Added button: " .. widgets.tabLeftButton.label)
+    widgets.tabRightButton = Button.new(18, 2, 3, 1, ">", callbackTab, false, false, mon)
+    widgets.tabRightButton.backgroundInactive = colors.gray
+    logging.log("DEBUG", "Added button: " .. widgets.tabRightButton.label)
     -- Requests groups
     widgets.allGroup = Group.new(4, "All", mon)
     logging.log("DEBUG", "Added group: " .. widgets.allGroup.label)
@@ -237,6 +273,28 @@ function updateDisplay (mon)
     mon.write("v" .. VERSION)
     mon.setCursorPos(width - 2, 1)
     mon.write(mode)
+    mon.setCursorPos(16, 2)
+    mon.setBackgroundColor(colors.black)
+    mon.setTextColor(colors.white)
+    mon.write(currentTab)
+    mon.setCursorPos(22, 2)
+    local tab = ""
+    if currentTab == 0 then
+        tab = "Requests"
+    elseif currentTab == 1 then
+        tab = "Work Orders"
+    elseif currentTab == 2 then
+        tab = "Citizens"
+    elseif currentTab == 3 then
+        tab = "Visitors"
+    elseif currentTab == 4 then
+        tab = "Buildings"
+    elseif currentTab == 5 then
+        tab = "Research"
+    elseif currentTab == 6 then
+        tab = "Stats"
+    end
+    mon.write(tab)
     -- Requests | Work Orders | Citizens | Visitors | Buildings | Research | Stats
     if currentTab == 0 then
         -- Item Name | Requested | Available | Missing
@@ -282,9 +340,6 @@ function updateDisplay (mon)
             end
             i = i + 1
         until i == builderCount
-        for _, widget in pairs(widgets) do
-            widget:render()
-        end
         -- Green: Available, Yellow: Requested, Red: Missing, Blue: Blacklisted | Heartbeat
         mon.setBackgroundColor(colors.black)
         mon.setCursorPos(1, height)
@@ -297,6 +352,16 @@ function updateDisplay (mon)
         mon.setTextColor(colors.blue)
         mon.write(" Blacklisted")
     end
+    for _, widget in pairs(widgets) do
+        if widget.type == "group" then
+            if currentTab == 0 then
+                widget:render()
+            end
+        else
+            widget:render()
+        end
+    end
+    mon.setBackgroundColor(colors.black)
     mon.setTextColor(colors.white)
     mon.setCursorPos(width - 5, height)
     mon.write(updateInterval - iteration .. "s")
@@ -307,79 +372,6 @@ function updateDisplay (mon)
         mon.setBackgroundColor(colors.red)
     end
     mon.write("  ")
-end
-
-function callbackRefresh ()
-    logging.log("DEBUG", "Refresh callback")
-    getInputs()
-    local success = true
-    if widgets.autoButton.active then
-        success = moveItems()
-    end
-    if displayMode then
-        os.queueEvent("display_update")
-    end
-    iteration = 0
-    os.cancelTimer(timerID)
-    if success == nil or success then
-        timerID = os.startTimer(1)
-    else
-        getPeripherals()
-        if success == nil or success then
-            timerID = os.startTimer(1)
-        else
-            mode = "NI"
-        end
-    end
-end
-
-function callbackScroll (direction)
-    logging.log("DEBUG", "Scroll callback")
-    if direction then
-        widgets.scrollUpButton.active = false
-        lineOffset = lineOffset + 1
-    else
-        widgets.scrollDownButton.active = false
-        lineOffset = lineOffset - 1
-    end
-    if lineOffset < 0 then
-        lineOffset = 0
-    end
-end
-
-function callbackTab (tab)
-    logging.log("DEBUG", "Tab callback")
-    if tab < 0 or tab > 6 then
-        logging.log("ERROR", "Invalid tab: " .. tab)
-        return
-    end
-    if tab ~= currentTab then
-        lineOffset = 0
-        currentTab = tab
-        logging.log("DEBUG", "Switched to tab: " .. tab)
-        widgets.requestsTab.active = false
-        widgets.workOrdersTab.active = false
-        widgets.citizensTab.active = false
-        widgets.visitorsTab.active = false
-        widgets.buildingsTab.active = false
-        widgets.researchTab.active = false
-        widgets.statsTab.active = false
-        if tab == 0 then
-            widgets.requestsTab.active = true
-        elseif tab == 1 then
-            widgets.workOrdersTab.active = true
-        elseif tab == 2 then
-            widgets.citizensTab.active = true
-        elseif tab == 3 then
-            widgets.visitorsTab.active = true
-        elseif tab == 4 then
-            widgets.buildingsTab.active = true
-        elseif tab == 5 then
-            widgets.researchTab.active = true
-        elseif tab == 6 then
-            widgets.statsTab.active = true
-        end
-    end
 end
 
 function getBuilders()
