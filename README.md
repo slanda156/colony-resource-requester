@@ -18,7 +18,17 @@ Now you can manage your colonie from one place.
 
 ## Installation
 
-Install with `pastebin get CCPD5tYp install` and run `install`
+Install with
+
+``` shell
+pastebin get CCPD5tYp install.lua
+```
+
+and run
+
+```shell
+install
+```
 
 All necessary files will be donwloaded
 
