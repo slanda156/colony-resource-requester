@@ -1,5 +1,5 @@
 -- Runtime configuration
-updateInterval = 30 -- in seconds
+updateInterval = 15 -- in seconds
 forceHeadless = false -- Force headless mode
 -- WIFI is WIP and not working
 wifiEnable = false -- Enable wifi
@@ -186,7 +186,6 @@ end
 function callbackScroll (direction)
     logging.log("DEBUG", "Scroll callback")
     if direction then
-        widgets.scrollUpButton.active = false
         lineOffset = lineOffset + 1
     else
         lineOffset = lineOffset - 1
@@ -349,6 +348,175 @@ function updateDisplay (mon)
         mon.write(" Missing")
         mon.setTextColor(colors.blue)
         mon.write(" Blacklisted")
+    elseif currentTab == 2 then
+        -- Citizens
+        mon.setBackgroundColor(colors.gray)
+        mon.setTextColor(colors.black)
+        if lineOffset == 0 then
+            mon.setCursorPos(1, 3 - lineOffset)
+            mon.write(string.rep(" ", width))
+            mon.setCursorPos(1, 3 - lineOffset)
+            mon.write("Children: ")
+        end
+        mon.setBackgroundColor(colors.lightGray)
+        local maxLines = 0
+        for i, child in ipairs(children) do
+            if i - lineOffset > height - 4 then
+                break
+            end
+            if i - lineOffset >= 1 then
+                mon.setCursorPos(1, 4 + i - lineOffset)
+                mon.write(string.rep(" ", width))
+                mon.setCursorPos(1, 4 + i - lineOffset)
+                mon.write(child.name)
+            end
+            maxLines = i
+        end
+        local line = 4 + maxLines - lineOffset
+        if 4 + maxLines - lineOffset > 2 then
+            mon.setBackgroundColor(colors.gray)
+            mon.setCursorPos(1, 4 + maxLines - lineOffset)
+            mon.write(string.rep(" ", width))
+            mon.setCursorPos(1, 4 + maxLines - lineOffset)
+            mon.write("Adults: ")
+        end
+        for i, citizen in ipairs(citizens) do
+            line = 4 + maxLines + i - lineOffset
+            if i - lineOffset > height - 4 then
+                break
+            end
+            if line > 2 then
+                mon.setBackgroundColor(colors.lightGray)
+                mon.setTextColor(colors.black)
+                mon.setCursorPos(1, line)
+                mon.write(string.rep(" ", width))
+                mon.setCursorPos(1, line)
+                local g = ""
+                if citizen.gender == "female" then
+                    g = "F"
+                else
+                    g = "M"
+                end
+                if citizen.work ~= nil and citizen.work ~= {} then
+                    if citizen.isIdle then
+                        mon.setTextColor(colors.yellow)
+                    end
+                    if citizen.home == nil or citizen.home == {} then
+                        mon.setTextColor(colors.blue)
+                    end
+                    if citizen.health / citizen.maxHealth < 0.5 then
+                        mon.setTextColor(colors.red)
+                    end
+                    mon.write("[" .. g .. "] " .. citizen.name)
+                else
+                    mon.setTextColor(colors.orange)
+                    mon.write("[" .. g .. "] " .. citizen.name)
+                end
+            end
+        end
+        mon.setBackgroundColor(colors.black)
+        mon.setTextColor(colors.yellow)
+        mon.setCursorPos(1, height)
+        mon.write("Idle")
+        mon.setTextColor(colors.orange)
+        mon.write(" Jobless")
+        mon.setTextColor(colors.blue)
+        mon.write(" Homeless")
+        mon.setTextColor(colors.red)
+        mon.write(" Health < 50%")
+    elseif currentTab == 3 then
+        -- Visitors
+        mon.setBackgroundColor(colors.gray)
+        mon.setTextColor(colors.black)
+        for i, visitor in ipairs(visitors) do
+            local line = 4 + i - lineOffset
+            if i - lineOffset > height - 3 then
+                break
+            end
+            if line > 2 then
+                mon.setCursorPos(1, line)
+                mon.write(string.rep(" ", width))
+                mon.setCursorPos(1, line)
+                mon.write(visitor.name)
+            end
+            if line + 1 > 2 then
+                mon.setCursorPos(1, line + 1)
+                mon.setBackgroundColor(colors.lightGray)
+                mon.write(string.rep(" ", width))
+                mon.setCursorPos(1, line + 1)
+                mon.write("Cost: " .. visitor.recruitCost.amount .. " * " .. visitor.recruitCost.displayName)
+            end
+        end
+    elseif currentTab == 5 then
+        -- Research
+        mon.setBackgroundColor(colors.gray)
+        mon.setTextColor(colors.black)
+        mon.setCursorPos(1, 4)
+        mon.write(string.rep(" ", width))
+        mon.setCursorPos(1, 4)
+        mon.write("Finished Research:")
+        mon.setBackgroundColor(colors.black)
+        mon.setTextColor(colors.white)
+        mon.setCursorPos(2, 5)
+        for i, res in ipairs(completedResearch) do
+            if i - lineOffset > height - 5 then
+                break
+            end
+            if i - lineOffset >= 1 then
+                mon.write(res.name)
+                mon.setCursorPos(2, 5 + i - lineOffset)
+            end
+        end
+        mon.setBackgroundColor(colors.gray)
+        mon.setTextColor(colors.black)
+        mon.setCursorPos(width / 2, 4)
+        mon.write("Current Research:")
+        mon.setBackgroundColor(colors.black)
+        mon.setTextColor(colors.white)
+        mon.setCursorPos(width / 2, 5)
+        for i, res in ipairs(currentResearch) do
+            if i - lineOffset > height - 5 then
+                break
+            end
+            if i - lineOffset >= 1 then
+                mon.write(res.name)
+                mon.setCursorPos(width / 2, 5 + i - lineOffset)
+            end
+        end
+    elseif currentTab == 6 then
+        -- Stats
+        mon.setBackgroundColor(colors.black)
+        mon.setTextColor(colors.white)
+        mon.setCursorPos(2, 4)
+        mon.write("Colony: " .. colonyName)
+        mon.setCursorPos(2, 5)
+        mon.write("Citizens: " .. #citizens .. "/" .. maxCitizens)
+        mon.setCursorPos(2, 6)
+        mon.write("Children: " .. #children)
+        mon.setCursorPos(2, 7)
+        mon.write("Idle Citizens: " .. #idleCitizens)
+        mon.setCursorPos(2, 8)
+        mon.write("Homeless Citizens: " .. #homlessCitizens)
+        mon.setCursorPos(2, 9)
+        mon.write("Jobless Citizens: " .. #joblessCitizens)
+        mon.setCursorPos(2, 10)
+        mon.write("Happiness: " .. (math.floor(happiness * 10)) / 10)
+        mon.setCursorPos(2, 11)
+        local attackText = ""
+        if underAttack then
+            mon.setBackgroundColor(colors.red)
+            attackText = "Yes"
+        else
+            mon.setBackgroundColor(colors.green)
+            attackText = "No"
+        end
+        mon.write("Under Attack: " .. attackText)
+        mon.setBackgroundColor(colors.black)
+        mon.setCursorPos(2, 12)
+        mon.write("Graves: " .. graves)
+        mon.setCursorPos(2, 13)
+        mon.write("Buildings: " .. buildingsCount)
+
     end
     for _, widget in pairs(widgets) do
         if widget.type == "group" then
@@ -391,6 +559,23 @@ function getBuilders()
         end
     end
     return builders, i
+end
+
+function checkResearch(res)
+    if type(res) == "table" then
+        if res.status == "FINISHED" then
+            table.insert(completedResearch, res)
+        elseif res.status == "IN_PROGRESS" then
+            table.insert(currentResearch, res)
+        end
+        if res.children ~= nil and res.children ~= {} then
+            for _, child in ipairs(res.children) do
+                checkResearch(child)
+            end
+        end
+    else
+        logging.log("ERROR", "Research is not a table")
+    end
 end
 
 function getInputs(skip)
@@ -442,12 +627,12 @@ function getInputs(skip)
                 builderItem.status = "a"
             end
             local skipped = false
-            for _, existingItem in ipairs(builderRequests[builder.id].items) do
-                if existingItem.fingerprint == builderItem.fingerprint then
-                    skipped = true
-                    break
-                end
-            end
+            -- for _, existingItem in ipairs(builderRequests[builder.id].items) do
+            --     if existingItem.fingerprint == builderItem.fingerprint then
+            --         skipped = true
+            --         break
+            --     end
+            -- end
             if not skipped then
                 local item = {
                     name=builderItem.displayName,
@@ -525,6 +710,42 @@ function getInputs(skip)
                 item.missing = item.needed
             end
         end
+    end
+    -- Get infos about citizens and visitors
+    citizens = colony.getCitizens()
+    idleCitizens = {}
+    homlessCitizens = {}
+    joblessCitizens = {}
+    children = {}
+    for _, citizen in ipairs(citizens) do
+        if citizen.isIdle then
+            table.insert(idleCitizens, citizen)
+        end
+        if citizen.home == nil or citizen.home == {} then
+            table.insert(homlessCitizens, citizen)
+        end
+        if citizen.work == nil or citizen.work == {} then
+            table.insert(joblessCitizens, citizen)
+        end
+        if citizen.age == "child" then
+            table.insert(children, citizen)
+        end
+    end
+    buildingsCount = #colony.getBuildings()
+    maxCitizens = colony.maxOfCitizens()
+    happiness = colony.getHappiness()
+    underAttack = colony.isUnderAttack()
+    graves = colony.amountOfGraves()
+    colonyName = colony.getColonyName()
+    visitors = colony.getVisitors()
+    completedResearch = {}
+    currentResearch = {}
+    local research = colony.getResearch()
+    for _, res in pairs(research) do
+        for _, child in ipairs(res) do
+            checkResearch(child)
+        end
+        -- checkResearch(res)
     end
 end
 
