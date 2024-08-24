@@ -80,47 +80,55 @@ function loadConfig ()
         logging.log("INFO", "No config file found, creating default config")
         config = createConfig()
         saveConfig(config)
-        return config
-    end
-    local file = fs.open("config.json", "r")
-    if file then
-        local data = file.readAll()
-        file.close()
-        local status, err = pcall(function () config = textutils.unserializeJSON(data) end)
-        if not status then
-            logging.log("ERROR", "Couldn't parse config file, using default config")
-            logging.log("DEBUG", "Error: " .. err)
-            config = createConfig()
-        else
-            local validResult = validateConfig(config)
-            -- 1: Valid, 0: Outdated, -1: Invalid
-            if validResult == 1 then
-                logging.log("INFO", "Config loaded")
-            elseif validResult == 0 then
-                logging.log("WARNING", "Config is outdated, updating")
-                logging.log("DEBUG", "Old config version: " .. config.version)
-                local newConfig = createConfig()
-                for key, value in pairs(config) do
-                    -- Insert here when config keys are renamed
-                    if newConfig[key] == nil then
-                        loegging.log("WARNING", "Removing outdated config key: " .. key)
-                    elseif key ~= "version" then
-                        if type(value) == "table" then
-                            newConfig[key] = mergeTable(newConfig[key], value)
-                        else
-                            newConfig[key] = value
+    else
+        local file = fs.open("config.json", "r")
+        if file then
+            local data = file.readAll()
+            file.close()
+            local status, err = pcall(function () config = textutils.unserializeJSON(data) end)
+            if not status then
+                logging.log("ERROR", "Couldn't parse config file, using default config")
+                logging.log("DEBUG", "Error: " .. err)
+                shell.run("rename", "config.json", "config.json.bak")
+                config = createConfig()
+                saveConfig(config)
+            else
+                local validResult = validateConfig(config)
+                -- 1: Valid, 0: Outdated, -1: Invalid
+                if validResult == 1 then
+                    logging.log("INFO", "Config loaded")
+                elseif validResult == 0 then
+                    logging.log("WARNING", "Config is outdated, updating")
+                    logging.log("DEBUG", "Old config version: " .. config.version)
+                    shell.run("rename", "config.json", "config.json.bak")
+                    local newConfig = createConfig()
+                    for key, value in pairs(config) do
+                        -- Insert here when config keys are renamed
+                        if newConfig[key] == nil then
+                            loegging.log("WARNING", "Removing outdated config key: " .. key)
+                        elseif key ~= "version" then
+                            if type(value) == "table" then
+                                newConfig[key] = mergeTable(newConfig[key], value)
+                            else
+                                newConfig[key] = value
+                            end
                         end
                     end
+                    config = newConfig
+                    saveConfig(config)
+                elseif validResult == -1 then
+                    logging.log("ERROR", "Invalid config, using default config")
+                    shell.run("rename", "config.json", "config.json.bak")
+                    config = createConfig()
+                    saveConfig(config)
                 end
-                config = newConfig
-            elseif validResult == -1 then
-                logging.log("ERROR", "Invalid config, using default config")
-                config = createConfig()
             end
+        else
+            logging.log("ERROR", "Couldn't open config file, using default config")
+            shell.run("rename", "config.json", "config.json.bak")
+            config = createConfig()
+            saveConfig(config)
         end
-    else
-        logging.log("ERROR", "Couldn't open config file, using default config")
-        config = createConfig()
     end
     return config
 end
