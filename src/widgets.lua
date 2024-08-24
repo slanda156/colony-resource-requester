@@ -212,6 +212,7 @@ function Button.new(x, y, width, height, label, callback, arg, switch, mon)
     self.callback = callback
     self.callbackArg = arg
     self.active = false
+    self.switch = switch
     self.monitor = mon
     self.backgroundActive = colors.green
     self.backgroundInactive = colors.red
