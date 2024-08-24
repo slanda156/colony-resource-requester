@@ -159,7 +159,6 @@ function getPeripherals ()
     end
 end
 
-
 function callbackRefresh ()
     logging.log("DEBUG", "Refresh callback")
     getInputs()
@@ -190,7 +189,6 @@ function callbackScroll (direction)
         widgets.scrollUpButton.active = false
         lineOffset = lineOffset + 1
     else
-        widgets.scrollDownButton.active = false
         lineOffset = lineOffset - 1
     end
     if lineOffset < 0 then
@@ -212,8 +210,7 @@ function callbackTab (tab)
         currentTab = 0
     end
     logging.log("DEBUG", "New tab: " .. currentTab)
-    widgets.tabLeftButton.active = false
-    widgets.tabRightButton.active = false
+    lineOffset = 0
 end
 
 function resetDisplay(mon)
@@ -262,7 +259,6 @@ end
 
 function updateDisplay (mon)
     local width, height = mon.getSize()
-    local maxLines = height - 3
     resetDisplay(mon)
     -- Title | Auto Button | Status
     mon.setBackgroundColor(colors.lightGray)
@@ -310,6 +306,7 @@ function updateDisplay (mon)
         mon.write("|" .. "Miss")
         mon.write(string.rep(" ", 6 - string.len("Miss")))
         widgets.allGroup:clear()
+        widgets.allGroup.lineOffset = lineOffset
         if allRequests ~= nil and allRequests ~= {} then
             for _, item in ipairs(allRequests) do
                 if item then
@@ -326,6 +323,7 @@ function updateDisplay (mon)
                 if widget.type == "group" then
                     if key == index then
                         widget:clear()
+                        widget.lineOffset = lineOffset
                         widget:setOrder(builderRequests[i].order)
                         for _, item in ipairs(builderRequests[i].items) do
                             if item ~= nil then

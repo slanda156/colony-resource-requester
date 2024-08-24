@@ -8,6 +8,7 @@ function Group.new(line, label, mon)
     local self = setmetatable({}, Group)
     self.type = "group"
     self.line = line
+    self.lineOffset = 0
     self.lines = 1
     self.label = label
     self.collapsed = false
@@ -94,12 +95,13 @@ end
 
 function Group:render()
     local width, height = self.monitor.getSize()
-    if self.line >= height -1 then
+    local line = self.line - self.lineOffset
+    if line >= height -1 or line <= 3 then
         return
     end
     self.monitor.setBackgroundColor(colors.gray)
     self.monitor.setTextColor(colors.black)
-    self.monitor.setCursorPos(1, self.line)
+    self.monitor.setCursorPos(1, line)
     local orderMsg = ""
     local orderMsgStart = ""
     local orderMsgEnd = ""
@@ -167,13 +169,13 @@ function Group:render()
                 local available = strFuncs.compInt(item[3])
                 local missing = strFuncs.compInt(item[4])
                 self.monitor.write(string.rep(" ", width))
-                self.monitor.setCursorPos(4, self.line + i)
+                self.monitor.setCursorPos(4, line + i)
                 self.monitor.write(label)
-                self.monitor.setCursorPos(width - (spacing * 3 - 1), self.line + i)
+                self.monitor.setCursorPos(width - (spacing * 3 - 1), line + i)
                 self.monitor.write("|" .. needed)
-                self.monitor.setCursorPos(width - (spacing * 2 - 1), self.line + i)
+                self.monitor.setCursorPos(width - (spacing * 2 - 1), line + i)
                 self.monitor.write("|" .. available)
-                self.monitor.setCursorPos(width - (spacing * 1 - 1), self.line + i)
+                self.monitor.setCursorPos(width - (spacing * 1 - 1), line + i)
                 self.monitor.write("|" .. missing)
             end
         end
@@ -181,7 +183,8 @@ function Group:render()
 end
 
 function Group:clicked(x, y)
-    if y == self.line then
+    local line = self.line - self.lineOffset
+    if y == line and line > 3 then
         self:toggle()
         os.queueEvent("display_update")
         return true
