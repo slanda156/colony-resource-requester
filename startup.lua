@@ -1,15 +1,142 @@
--- Runtime configuration
-updateInterval = 15 -- in seconds
-forceHeadless = false -- Force headless mode
--- WIFI is WIP and not working
-wifiEnable = false -- Enable wifi
-wifiSendChannel = 1 -- The channel to use for the wifi messages
-wifiReplyChannel = 600 -- The channel to use for the wifi replies
-
--- Do not change anything below
 logging = require("src/logging")
 Button = require("src/widgets").Button
 Group = require("src/widgets").Group
+
+function mergeTable (t, newT)
+    local merged = {}
+    for key, value in pairs(t) do
+        if newT[key] ~= nil then
+            if type(value) == "table" then
+                merged[key] = mergeTable(value, newT[key])
+            else
+                merged[key] = newT[key]
+            end
+        end
+    end
+    return merged
+end
+
+function compareTable (t1, t2)
+    for key, value in pairs(t1) do
+        if t2[key] == nil then
+            return false
+        elseif type(value) ~= type(t2[key]) then
+            return false
+        end
+        if type(value) == "table" then
+            if not compareTable(value, t2[key]) then
+                return false
+            end
+        end
+    end
+    return true
+end
+
+function validateConfig (config)
+    if config == nil then -- Invalid config
+        logging.log("DEBUG", "Config is nil")
+        return -1
+    end
+    if config.version == nil then -- Invalid version
+        logging.log("DEBUG", "Config version is nil")
+        return -1
+    end
+    if config.version ~= VERSION then -- Outdated version
+        logging.log("DEBUG", "Config version is outdated")
+        return 0
+    end
+    local modelConfig = createConfig()
+    for key, value in pairs(modelConfig) do
+        if config[key] == nil then
+            logging.log("DEBUG", "Config key missing: " .. key)
+            return -1
+        end
+        if type(value) == "table" then
+            if not compareTable(value, config[key]) then
+                logging.log("DEBUG", "Config key invalid: " .. key)
+                return -1
+            end
+        end
+    end
+    return 1
+end
+
+function createConfig ()
+    local config = {}
+    config.version = VERSION
+    config.updateInterval = 15
+    config.forceHeadless = false
+    config.lastTab = 0
+    config.wifi = {}
+    config.wifi.wifiEnable = false
+    config.wifi.sendChannel = 600
+    config.wifi.receiveChannel = 601
+    return config
+end
+
+function loadConfig ()
+    local config = {}
+    if not fs.exists("config.json") then
+        logging.log("INFO", "No config file found, creating default config")
+        config = createConfig()
+        saveConfig(config)
+        return config
+    end
+    local file = fs.open("config.json", "r")
+    if file then
+        local data = file.readAll()
+        file.close()
+        local status, err = pcall(function () config = textutils.unserializeJSON(data) end)
+        if not status then
+            logging.log("ERROR", "Couldn't parse config file, using default config")
+            logging.log("DEBUG", "Error: " .. err)
+            config = createConfig()
+        else
+            local validResult = validateConfig(config)
+            -- 1: Valid, 0: Outdated, -1: Invalid
+            if validResult == 1 then
+                logging.log("INFO", "Config loaded")
+            elseif validResult == 0 then
+                logging.log("WARNING", "Config is outdated, updating")
+                logging.log("DEBUG", "Old config version: " .. config.version)
+                local newConfig = createConfig()
+                for key, value in pairs(config) do
+                    -- Insert here when config keys are renamed
+                    if newConfig[key] == nil then
+                        loegging.log("WARNING", "Removing outdated config key: " .. key)
+                    elseif key ~= "version" then
+                        if type(value) == "table" then
+                            newConfig[key] = mergeTable(newConfig[key], value)
+                        else
+                            newConfig[key] = value
+                        end
+                    end
+                end
+                config = newConfig
+            elseif validResult == -1 then
+                logging.log("ERROR", "Invalid config, using default config")
+                config = createConfig()
+            end
+        end
+    else
+        logging.log("ERROR", "Couldn't open config file, using default config")
+        config = createConfig()
+    end
+    return config
+end
+
+function saveConfig (config)
+    local validConfig = validateConfig(config)
+    local file = fs.open("config.json", "w")
+    if validConfig == 1 then
+        config.lastTab = currentTab
+        file.write(textutils.serializeJSON(config))
+    else
+        logging.log("ERROR", "Invalid config, saving default config")
+        logging.log("DEBUG", "Config status: " .. validConfig)
+        file.write(textutils.serializeJSON(createConfig()))
+    end
+end
 
 function checkIfDirect (per)
     if per == nil then
@@ -29,7 +156,7 @@ function checkIfDirect (per)
 end
 
 function getPeripherals ()
-    if not forceHeadless then
+    if not config.forceHeadless then
         monitor = peripheral.find("monitor")
         displayMode = true
         if not monitor then
@@ -50,7 +177,6 @@ function getPeripherals ()
                 monitor.setCursorPos(1, 2)
                 monitor.write("At least 3x2 required")
                 logging.log("WARNING", "Monitor too small, at least 3x2 required")
-                logging.log("DEBUG", "Monitor size: " .. width .. "x" .. height)
                 logging.log("INFO", "Running in headless mode")
                 displayMode = false
             else
@@ -108,7 +234,7 @@ function getPeripherals ()
             logging.log("INFO", "Colony Integrator connected")
         end
     end
-    if wifiEnable then
+    if config.wifi.wifiEnable then
         local modems = peripheral.find("modem")
         if not modems then
             wifi = nil
@@ -125,7 +251,7 @@ function getPeripherals ()
         if wifi == nil then
             logging.log("WARNING", "Wirless modem not found")
         else
-            wifi.open(wifiSendChannel)
+            wifi.open(config.wifi.sendChannel)
             logging.log("INFO", "WIFI enabled")
         end
     else
@@ -225,12 +351,13 @@ function setUpDisplay(mon)
         builders, builderCount = getBuilders()
     end
     local width, height = mon.getSize()
-    logging.log("DEBUG", "Monitor size: " .. width .. "x" .. height)
     -- UP | DOWN | Requests | Work Orders | Citizens | Visitors | Buildings | Research | Stats
     widgets = {}
-    widgets.autoButton = Button.new(width - 9, 1, 6, 1, "Auto", nil, nil, true, mon)
+    widgets.autoButton = Button.new(width - 15, 1, 6, 1, "Auto", nil, nil, true, mon)
     widgets.autoButton.active = true
     logging.log("DEBUG", "Added button: " .. widgets.autoButton.label)
+    widgets.exitButton = Button.new(width - 9, 1, 6, 1, "Exit", function () running = false end, nil, false, mon)
+    logging.log("DEBUG", "Added button: " .. widgets.exitButton.label)
     -- Scroll buttons
     widgets.scrollUpButton = Button.new(2, 2, 4, 1, "/\\", callbackScroll, true, false, mon)
     widgets.scrollUpButton.backgroundInactive = colors.gray
@@ -530,7 +657,7 @@ function updateDisplay (mon)
     mon.setBackgroundColor(colors.black)
     mon.setTextColor(colors.white)
     mon.setCursorPos(width - 5, height)
-    mon.write(updateInterval - iteration .. "s")
+    mon.write(config.updateInterval - iteration .. "s")
     mon.setCursorPos(width - 1, height)
     if Heartbeat then
         mon.setBackgroundColor(colors.black)
@@ -817,10 +944,10 @@ function moveItems()
 end
 
 function sendWifi(msg)
-    if wifi.isOpen(wifiSendChannel) then
-        logging.log("DEBUG", "Sending message on channel: " .. wifiSendChannel)
+    if wifi.isOpen(config.wifi.sendChannel) then
+        logging.log("DEBUG", "Sending message on channel: " .. config.wifi.sendChannel)
         logging.log("DEBUG", "Message: " .. msg)
-        wifi.transmit(wifiSendChannel, wifiReplyChannel, msg)
+        wifi.transmit(config.wifi.sendChannel, config.wifi.receiveChannel, msg)
     else
         logging.log("ERROR", "WIFI channel closed")
     end
@@ -847,7 +974,7 @@ function update ()
         os.queueEvent("display_update")
     end
     -- Update every updateInterval seconds the logic
-    if iteration == updateInterval then
+    if iteration == config.updateInterval then
         local success = true
         if widgets.autoButton.active then
             success = moveItems()
@@ -907,10 +1034,11 @@ end
 -- Start up
 VERSION = "0.3.0-dev"
 logging.log("INFO", "Starting up, v" .. VERSION)
+config = loadConfig()
 running = true
 timerID = 0
 iteration = 0
-currentTab = 0
+currentTab = config.lastTab
 lineOffset = 0
 builders = {}
 builderCount = 0
@@ -929,11 +1057,11 @@ else
     handleEvents()
 end
 
-
 if wifi then
     wifi.closeAll()
 end
 if displayMode then
     resetDisplay(monitor)
 end
+saveConfig(config)
 logging.log("INFO", "Stopped")
