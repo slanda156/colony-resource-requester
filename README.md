@@ -4,7 +4,7 @@
 >A manager for your Minecolonie
 
 This was a resource requester for the Minecraft mod Minecolonies.
-Now its a whole managing programm in the making. You will be able see important stats of your colonie or see current material request that will be automaticly made and send to the colonie.
+Now its a whole managing programm in the making. You will be able see important stats of your colonie or see current material request that will be automaticly made and send to the colony.
 
 ![Example Image of the manager](example.png)
 
