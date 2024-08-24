@@ -137,6 +137,9 @@ function saveConfig (config)
     local validConfig = validateConfig(config)
     local file = fs.open("config.json", "w")
     if validConfig == 1 then
+        if currentTab == nil then
+            currentTab = 0
+        end
         config.lastTab = currentTab
         file.write(textutils.serializeJSON(config))
     else
