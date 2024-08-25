@@ -68,6 +68,7 @@ function createConfig ()
     config.forceHeadless = false
     config.lastTab = 0
     config.allowedRequests = {}
+    config.allowedRequests.enabled = false
     config.allowedRequests.builder = true
     config.wifi = {}
     config.wifi.wifiEnable = false
@@ -826,37 +827,44 @@ function getInputs(skip)
     for _, request in ipairs(rawRequests) do
         -- check config for allowed requests
         local allowed = false
-        local requestTarget = ""
-        local i = 0
-        for text in requestTarget:gmatch("%S+") do
-            if i > 0 then
-                requestTarget = requestTarget .. " " .. text
+        if config.allowedRequests.enabled then
+            local requestTarget = ""
+            local i = 0
+            for text in request.target:gmatch("%S+") do --%S+
+                if i > 0 then
+                    requestTarget = requestTarget .. " " .. text
+                end
+                i = i + 1
             end
-            i = i + 1
+            requestTarget = requestTarget:sub(2)
+            for _, citizen in ipairs(citizens) do
+                if citizen.name == requestTarget then
+                    if config.allowedRequests.builder then
+                        if citizen.work.type == "builder" then
+                            allowed = true
+                        end
+                    end
+                    break
+                else
+                end
+            end
+        else
+            allowed = true
         end
-        requestTarget = requestTarget:sub(2)
-        for _, citizen in ipairs(citizens) do
-            if citizen.name == requestTarget then
-                if config.allowedRequests.builder then
-                    if citizen.work.type == "builder" then
-                        allowed = true
+        if allowed then
+            for _, itemRequest in ipairs(request.items) do
+                local skipped = false
+                for _, existingItem in ipairs(allRequests) do
+                    if existingItem.fingerprint == itemRequest.fingerprint then
+                        existingItem.needed = existingItem.needed + itemRequest.count
+                        skipped = true
+                        break
                     end
                 end
-                break
-            end
-        end
-        for _, itemRequest in ipairs(request.items) do
-            local skipped = false
-            for _, existingItem in ipairs(allRequests) do
-                if existingItem.fingerprint == itemRequest.fingerprint then
-                    existingItem.needed = existingItem.needed + itemRequest.count
-                    skipped = true
-                    break
+                if not skipped then
+                    local item = {name=itemRequest.displayName, fingerprint=itemRequest.fingerprint, needed=itemRequest.count * request.count}
+                    table.insert(allRequests, item)
                 end
-            end
-            if not skipped then
-                local item = {name=itemRequest.displayName, fingerprint=itemRequest.fingerprint, needed=itemRequest.count * request.count}
-                table.insert(allRequests, item)
             end
         end
     end
