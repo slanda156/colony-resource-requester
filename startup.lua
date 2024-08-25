@@ -67,6 +67,8 @@ function createConfig ()
     config.updateInterval = 15
     config.forceHeadless = false
     config.lastTab = 0
+    config.allowedRequests = {}
+    config.allowedRequests.builder = true
     config.wifi = {}
     config.wifi.wifiEnable = false
     config.wifi.sendChannel = 600
@@ -717,9 +719,45 @@ function checkResearch(res)
 end
 
 function getInputs(skip)
+    -- Get infos about citizens and visitors
+    citizens = colony.getCitizens()
+    idleCitizens = {}
+    homlessCitizens = {}
+    joblessCitizens = {}
+    children = {}
+    for _, citizen in ipairs(citizens) do
+        if citizen.isIdle then
+            table.insert(idleCitizens, citizen)
+        end
+        if citizen.home == nil or citizen.home == {} then
+            table.insert(homlessCitizens, citizen)
+        end
+        if citizen.work == nil or citizen.work == {} then
+            table.insert(joblessCitizens, citizen)
+        end
+        if citizen.age == "child" then
+            table.insert(children, citizen)
+        end
+    end
+    buildingsCount = #colony.getBuildings()
+    maxCitizens = colony.maxOfCitizens()
+    happiness = colony.getHappiness()
+    underAttack = colony.isUnderAttack()
+    graves = colony.amountOfGraves()
+    colonyName = colony.getColonyName()
+    visitors = colony.getVisitors()
+    completedResearch = {}
+    currentResearch = {}
+    local research = colony.getResearch()
+    for _, res in pairs(research) do
+        for _, child in ipairs(res) do
+            checkResearch(child)
+        end
+        -- checkResearch(res)
+    end
     -- allRequests -> Holds all items that are requested
     -- builderRequests -> Holds a table for each builder with all items that are requested
-    -- item = {name, fingerprint, needed, available, missing, status}
+    -- item = {name, fingerprint, needed, available, missing, status, order}
 
     if mode == "ME" and not skip then
         local cpus = bridge.getCraftingCPUs()
@@ -786,6 +824,27 @@ function getInputs(skip)
 
     local rawRequests = colony.getRequests()
     for _, request in ipairs(rawRequests) do
+        -- check config for allowed requests
+        local allowed = false
+        local requestTarget = ""
+        local i = 0
+        for text in requestTarget:gmatch("%S+") do
+            if i > 0 then
+                requestTarget = requestTarget .. " " .. text
+            end
+            i = i + 1
+        end
+        requestTarget = requestTarget:sub(2)
+        for _, citizen in ipairs(citizens) do
+            if citizen.name == requestTarget then
+                if config.allowedRequests.builder then
+                    if citizen.work.type == "builder" then
+                        allowed = true
+                    end
+                end
+                break
+            end
+        end
         for _, itemRequest in ipairs(request.items) do
             local skipped = false
             for _, existingItem in ipairs(allRequests) do
@@ -848,42 +907,6 @@ function getInputs(skip)
                 item.missing = item.needed
             end
         end
-    end
-    -- Get infos about citizens and visitors
-    citizens = colony.getCitizens()
-    idleCitizens = {}
-    homlessCitizens = {}
-    joblessCitizens = {}
-    children = {}
-    for _, citizen in ipairs(citizens) do
-        if citizen.isIdle then
-            table.insert(idleCitizens, citizen)
-        end
-        if citizen.home == nil or citizen.home == {} then
-            table.insert(homlessCitizens, citizen)
-        end
-        if citizen.work == nil or citizen.work == {} then
-            table.insert(joblessCitizens, citizen)
-        end
-        if citizen.age == "child" then
-            table.insert(children, citizen)
-        end
-    end
-    buildingsCount = #colony.getBuildings()
-    maxCitizens = colony.maxOfCitizens()
-    happiness = colony.getHappiness()
-    underAttack = colony.isUnderAttack()
-    graves = colony.amountOfGraves()
-    colonyName = colony.getColonyName()
-    visitors = colony.getVisitors()
-    completedResearch = {}
-    currentResearch = {}
-    local research = colony.getResearch()
-    for _, res in pairs(research) do
-        for _, child in ipairs(res) do
-            checkResearch(child)
-        end
-        -- checkResearch(res)
     end
 end
 
