@@ -30,7 +30,7 @@ and run
 install
 ```
 
-All necessary files will be donwloaded
+For more information visit the [Wiki](https://github.com/slanda156/colony-resource-requester/wiki)
 
 ## ToDo
 
