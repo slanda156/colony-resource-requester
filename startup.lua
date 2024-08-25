@@ -914,35 +914,46 @@ function moveItems()
                     logging.log("DEBUG", "Item is already crafting: " .. item.name .. " (" .. item.fingerprint .. ")")
                 else
                     if mode == "RS" then
-                        local itemName = bridge.getItem({fingerprint=item.fingerprint}).name
-                        if bridge.isItemCraftable({name=itemName}) then
-                            logging.log("DEBUG", "Crafting item: " .. item.name .. " (" .. item.fingerprint .. ")" .. " Amount: " .. item.missing)
-                            bridge.craftItem({fingerprint=item.fingerprint, count=item.missing})
-                            sleep(0.1)
-                            if not bridge.isItemCrafting({fingerprint=item.fingerprint}) then
-                                logging.log("DEBUG", "Couldn't craft item")
-                            end
-                        else
-                            logging.log("DEBUG", "Item not craftable: " .. item.name .. " | " .. itemName .. " (" .. item.fingerprint .. ")")
-                        end
-                    elseif mode == "ME" then
-                        if freeCPUs > 0 then
-                            local itemName = bridge.getItem({fingerprint=item.fingerprint}).name
+                        local itenName = ""
+                        local status, err = pcall(function () itemName = bridge.getItem({fingerprint=item.fingerprint}).name end)
+                        if status then
                             if bridge.isItemCraftable({name=itemName}) then
                                 logging.log("DEBUG", "Crafting item: " .. item.name .. " (" .. item.fingerprint .. ")" .. " Amount: " .. item.missing)
                                 bridge.craftItem({fingerprint=item.fingerprint, count=item.missing})
                                 sleep(0.1)
-                                if bridge.isItemCrafting({fingerprint=item.fingerprint}) then
-                                    freeCPUs = freeCPUs - 1
-                                else
+                                if not bridge.isItemCrafting({fingerprint=item.fingerprint}) then
                                     logging.log("DEBUG", "Couldn't craft item")
                                 end
                             else
-                                if itemName == nil then
-                                    logging.log("DEBUG", "Item has no recipe: " .. item.name .. " (" .. item.fingerprint .. ")")
+                                logging.log("DEBUG", "Item not craftable: " .. item.name .. " | " .. itemName .. " (" .. item.fingerprint .. ")")
+                            end
+                        else
+                            logging.log("DEBUG", "Couldn't get item: " .. item.name .. " (" .. item.fingerprint .. ") | Error: " .. err)
+                        end
+                    elseif mode == "ME" then
+                        if freeCPUs > 0 then
+                            local itenName = ""
+                            local status, err = pcall(function () itemName = bridge.getItem({fingerprint=item.fingerprint}).name end)
+                            if status then
+                                local itemName = bridge.getItem({fingerprint=item.fingerprint}).name
+                                if bridge.isItemCraftable({name=itemName}) then
+                                    logging.log("DEBUG", "Crafting item: " .. item.name .. " (" .. item.fingerprint .. ")" .. " Amount: " .. item.missing)
+                                    bridge.craftItem({fingerprint=item.fingerprint, count=item.missing})
+                                    sleep(0.1)
+                                    if bridge.isItemCrafting({fingerprint=item.fingerprint}) then
+                                        freeCPUs = freeCPUs - 1
+                                    else
+                                        logging.log("DEBUG", "Couldn't craft item")
+                                    end
                                 else
-                                    logging.log("DEBUG", "Item not craftable: " .. item.name .. " | "  .. itemName .. " (" .. item.fingerprint .. ")")
+                                    if itemName == nil then
+                                        logging.log("DEBUG", "Item has no recipe: " .. item.name .. " (" .. item.fingerprint .. ")")
+                                    else
+                                        logging.log("DEBUG", "Item not craftable: " .. item.name .. " | "  .. itemName .. " (" .. item.fingerprint .. ")")
+                                    end
                                 end
+                            else
+                                logging.log("DEBUG", "Couldn't get item: " .. item.name .. " (" .. item.fingerprint .. ") | Error: " .. err)
                             end
                         else
                             logging.log("DEBUG", "No free Crafting CPUs available")
