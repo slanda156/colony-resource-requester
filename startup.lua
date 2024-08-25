@@ -2,6 +2,41 @@ logging = require("src/logging")
 Button = require("src/widgets").Button
 Group = require("src/widgets").Group
 
+function insertAt (str, char, i)
+    return str:sub(1, i) .. char .. str:sub(i + 1)
+end
+
+function getIndexes (str, pattern)
+    local indexes = {}
+    local i = 0
+    while true do
+        i = string.find(str, pattern, i + 1)
+        table.insert(indexes, i)
+        if i == nil then
+            break
+        end
+    end
+    return indexes
+end
+
+function prettyJSON (json)
+    local j = json
+    local locations = {}
+    locations = getIndexes(j, "{")
+    for i = 1, #locations do
+        j = insertAt(j, "\n", locations[i] + i - 1)
+    end
+    locations = getIndexes(j, "}")
+    for i = 1, #locations do
+        j = insertAt(j, "\n", locations[i] + i - 2)
+    end
+    locations = getIndexes(j, ",")
+    for i = 1, #locations do
+        j = insertAt(j, "\n", locations[i] + i - 1)
+    end
+    return j
+end
+
 function mergeTable (t, newT)
     local merged = {}
     for key, value in pairs(t) do
@@ -144,11 +179,11 @@ function saveConfig (config)
             currentTab = 0
         end
         config.lastTab = currentTab
-        file.write(textutils.serializeJSON(config))
+        file.write(prettyJSON(textutils.serializeJSON(config)))
     else
         logging.log("ERROR", "Invalid config, saving default config")
         logging.log("DEBUG", "Config status: " .. validConfig)
-        file.write(textutils.serializeJSON(createConfig()))
+        file.write(prettyJSON(textutils.serializeJSON(createConfig())))
     end
 end
 
