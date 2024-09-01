@@ -41,29 +41,33 @@ function Group:setOrder(order)
 end
 
 function Group:addItem(item)
+    local error = false
     if not item[1] then
         logging.log("ERROR", "Item name missing")
         logging.log("DEBUG", "Item: " .. textutils.serialize(item))
-        return
+        error = true
     end
     if not item[2] then
         logging.log("ERROR", "Item needed missing")
         logging.log("DEBUG", "Item: " .. textutils.serialize(item))
-        return
+        error = true
     end
     if not item[3] then
         logging.log("ERROR", "Item available missing")
         logging.log("DEBUG", "Item: " .. textutils.serialize(item))
-        return
+        error = true
     end
     if not item[4] then
         logging.log("ERROR", "Item missing missing")
         logging.log("DEBUG", "Item: " .. textutils.serialize(item))
-        return
+        error = true
     end
     if not item[5] then
         logging.log("ERROR", "Item status missing")
         logging.log("DEBUG", "Item: " .. textutils.serialize(item))
+        error = true
+    end
+    if error then
         return
     end
     table.insert(self.items, item)
@@ -96,9 +100,6 @@ end
 function Group:render()
     local width, height = self.monitor.getSize()
     local line = self.line - self.lineOffset
-    if line >= height -1 or line <= 3 then
-        return
-    end
     self.monitor.setBackgroundColor(colors.gray)
     self.monitor.setTextColor(colors.black)
     self.monitor.setCursorPos(1, line)
@@ -133,19 +134,21 @@ function Group:render()
     else
         collSign = "-"
     end
-    if orderMsg == "" then
-        self.monitor.write(collSign .. self.size .. " " .. self.label .. ":" .. string.rep(" ", width))
-    else
-        self.monitor.write(collSign .. self.size .. " " .. self.label .. ": " .. orderMsg .. string.rep(" ", width))
+    if line < height -1 and line > 3 then
+        if orderMsg == "" then
+            self.monitor.write(collSign .. self.size .. " " .. self.label .. ":" .. string.rep(" ", width))
+        else
+            self.monitor.write(collSign .. self.size .. " " .. self.label .. ": " .. orderMsg .. string.rep(" ", width))
+        end
     end
     if not self.collapsed then
         self.monitor.setBackgroundColor(colors.lightGray)
         for i, item in ipairs(self.items) do
             if item[1] then
-                if self.line + i >= height - 1 then
+                if line + i >= height - 1 or line + 1 < 3 then
                     break
                 end
-                self.monitor.setCursorPos(1, self.line + i)
+                self.monitor.setCursorPos(1, line + i)
                 if item[5] == "a" then
                     self.monitor.setTextColor(colors.green)
                 elseif item[5] == "c" then
@@ -228,20 +231,24 @@ function Button:render()
         self.monitor.setBackgroundColor(self.backgroundInactive)
     end
     local space = string.rep(" ", math.ceil((self.width - string.len(self.label)) / 2))
+    local halfedSpace = math.floor(self.height / 2)
     if self.height > 1 then
         local i = 0
         repeat
+            self.monitor.setCursorPos(self.x, self.y + i)
             self.monitor.write(string.rep(" ", self.width))
             i = i + 1
-        until i >= math.floor(self.height / 2)
+        until i >= halfedSpace
     end
+    self.monitor.setCursorPos(self.x, self.y + halfedSpace)
     self.monitor.write(space .. self.label .. space)
-    if math.mod(self.height, 2) == 0 then
+    if self.height > 1 and math.mod(self.height, 2) == 1 then
         local i = 0
         repeat
+            self.monitor.setCursorPos(self.x, self.y + halfedSpace + 1 + i)
             self.monitor.write(string.rep(" ", self.width))
             i = i + 1
-        until i >= math.floor(self.height / 2)
+        until i >= halfedSpace
     end
 end
 
