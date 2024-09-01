@@ -1,39 +1,98 @@
-file = fs.open("logging.json", "r")
-local rawData = file.readAll()
-file.close()
-local config = textutils.unserializeJSON(rawData)
-logFile = config.logFile
-logMode = config.logMode
-logLevel = config.logLevel
-logTimeSource = config.logTimeSource
-logTimeFormat = config.logTimeFormat
+local allLevels = {DEBUG=0, INFO=1, WARNING=2, ERROR=3}
 
-local logging = {}
+local Logger = {}
+Logger.__index = Logger
 
-function logging.log (level, msg)
+function Logger.new()
+    local self = setmetatable({}, Logger)
+    self.logFile = "log.log"
+    self.logMode = "a"
+    self.logLevel = "DEBUG"
+    self.logTimeSource = "local"
+    self.logTimeFormat = true
+    self.allowedLevels = {DEBUG=0, INFO=1, WARNING=2, ERROR=3}
+    return self
+end
+
+function Logger:setLogConfig(t)
+    if type(t) ~= "table" then
+        print("Invalid log config, " .. type(t))
+        return
+    end
+    self:setLogFile(t.logFile)
+    self:setLogMode(t.logMode)
+    self:setLogLevel(t.logLevel)
+    self:setLogTimeSource(t.logTimeSource)
+    self:setLogTimeFormat(t.logTimeFormat)
+end
+
+function Logger:setLogLevel(level)
     if type(level) ~= "string" then
         print("Invalid log level")
         return
     end
-    if type(msg) ~= "string" then
-        print("Invalid log message")
+    if allLevels[level] == nil then
+        print("Invalid log level")
         return
     end
-    local allowedLevels = {DEBUG=0, INFO=1, WARNING=2, ERROR=3}
-    if logLevel == "INFO" then
-        allowedLevels["DEBUG"] = nil
-    elseif logLevel == "WARNING" then
-        allowedLevels["DEBUG"] = nil
-        allowedLevels["INFO"] = nil
-    elseif logLevel == "ERROR" then
-        allowedLevels["DEBUG"] = nil
-        allowedLevels["INFO"] = nil
-        allowedLevels["WARNING"] = nil
+    self.logLevel = level
+    if self.logLevel == "INFO" then
+        self.allowedLevels["DEBUG"] = nil
+    elseif self.logLevel == "WARNING" then
+        self.allowedLevels["DEBUG"] = nil
+        self.allowedLevels["INFO"] = nil
+    elseif self.logLevel == "ERROR" then
+        self.allowedLevels["DEBUG"] = nil
+        self.allowedLevels["INFO"] = nil
+        self.allowedLevels["WARNING"] = nil
     end
-    if allowedLevels[level] ~= nil then
-        local finalMsg = textutils.formatTime(os.time(logTimeSource), logTimeFormat) .. " - " .. level .. " - " ..  msg
+end
+
+function Logger:setLogTimeSource(source)
+    if type(source) ~= "string" then
+        print("Invalid log time source, " .. type(source))
+        return
+    end
+    logTimeSource = source
+end
+
+function Logger:setLogTimeFormat(format)
+    if type(format) ~= "boolean" then
+        print("Invalid log time format, " .. type(format))
+        return
+    end
+    logTimeFormat = format
+end
+
+function Logger:setLogFile(file)
+    if type(file) ~= "string" then
+        print("Invalid log file, " .. type(file))
+        return
+    end
+    logFile = file
+end
+
+function Logger:setLogMode(mode)
+    if type(mode) ~= "string" then
+        print("Invalid log mode, " .. type(mode))
+        return
+    end
+    logMode = mode
+end
+
+function Logger:log(level, msg)
+    if type(level) ~= "string" then
+        print("Invalid log level, " .. tostring(level))
+        return
+    end
+    if type(msg) ~= "string" then
+        print("Invalid log message, " .. type(msg))
+        return
+    end
+    if self.allowedLevels[level] ~= nil then
+        local finalMsg = textutils.formatTime(os.time(self.logTimeSource), self.logTimeFormat) .. " - " .. level .. " - " ..  msg
         print(finalMsg)
-        local file = fs.open(logFile, "a")
+        local file = fs.open(self.logFile, "a")
         if type(file) == "string" then
             print("Couldn't open log file")
             print(file)
@@ -44,4 +103,23 @@ function logging.log (level, msg)
     end
 end
 
-return logging
+function Logger:DEBUG(msg)
+    self:log("DEBUG", msg)
+end
+
+function Logger:INFO(msg)
+    self:log("INFO", msg)
+end
+
+function Logger:WARNING(msg)
+    self:log("WARNING", msg)
+end
+
+function Logger:ERROR(msg)
+    self:log("ERROR", msg)
+end
+
+
+local logger = Logger.new()
+
+return logger
