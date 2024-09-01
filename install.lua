@@ -103,17 +103,16 @@ if #branchInput == 0 then
     branchInput = "1"
 end
 if branchInput == "1" then -- main
-    codes["startup.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/main/startup.lua", true}
-    codes["src/widgets.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/main/src/widgets.lua", true}
-    codes["src/logging.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/main/src/logging.lua", true}
-    codes["src/function.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/main/src/function.lua", true}
-    codes["logging.json"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/main/logging.json", false}
+    codes["startup.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/main/startup.lua"}
+    codes["src/widgets.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/main/src/widgets.lua"}
+    codes["src/logging.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/main/src/logging.lua"}
+    codes["src/function.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/main/src/function.lua"}
+    codes["logging.json"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/main/logging.json"}
 elseif branchInput == "2" then -- dev
-    codes["startup.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/dev/startup.lua", true}
-    codes["src/widgets.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/dev/src/widgets.lua", true}
-    codes["src/logging.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/dev/src/logging.lua", true}
-    codes["src/function.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/dev/src/function.lua", true}
-    codes["logging.json"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/dev/logging.json", false}
+    codes["startup.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/dev/startup.lua"}
+    codes["src/widgets.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/dev/src/widgets.lua"}
+    codes["src/logging.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/dev/src/logging.lua"}
+    codes["src/function.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/dev/src/function.lua"}
 else -- invalid
     print("Invalid branch")
     return
@@ -140,30 +139,10 @@ if not skipQuestions then
     end
 end
 
-replaceAll = false
-if not skipQuestions then
-    print("Do you want to replace config files? (y/n)")
-    io.input(io.stdin)
-    replaceInput = io.read()
-    if replaceInput == "y" then
-        replaceAll = true
-    end
-end
-
 for f, c in pairs(codes) do
-    if c[2] or replaceAll then
-        delFile(f)
-    end
+    delFile(f)
     print("Downloading: "..f)
-    if c[2] or replaceAll then
-        shell.run("wget", c[1], f)
-    else
-        if fs.exists(f) then
-            print("Skipping: "..f)
-        else
-            shell.run("wget", c[1], f)
-        end
-    end
+    shell.run("wget", c[1], f)
 end
 
 print("Done")
