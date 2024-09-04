@@ -120,13 +120,7 @@ end
 
 numDownloads = 0
 for f, c in pairs(codes) do
-    if c[2] then
-        numDownloads = numDownloads + 1
-    else
-        if not fs.exists(f) then
-            numDownloads = numDownloads + 1
-        end
-    end
+    numDownloads = numDownloads + 1
 end
 
 if not skipQuestions then
