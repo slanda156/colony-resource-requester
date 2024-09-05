@@ -6,8 +6,8 @@ function strFuncs.compInt(number)
     if type(number) == "string" then
         number = tonumber(number)
     elseif type(number) ~= "number" then
-        logging.log("ERROR", "Invalid number")
-        logging.log("DEBUG", "Number: " .. textutils.serialize(number))
+        logging:ERROR("Invalid number")
+        logging:DEBUG("Number: " .. textutils.serialize(number))
         return
     end
     output = ""
