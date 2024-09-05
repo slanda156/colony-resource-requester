@@ -102,6 +102,12 @@ function createConfig ()
     config.updateInterval = 15
     config.forceHeadless = false
     config.lastTab = 0
+    config.logging = {}
+    config.logging.logFile = "config.log"
+    config.logging.logMode = "a"
+    config.logging.logLevel = "INFO"
+    config.logging.logTimeSource = "local"
+    config.logging.logTimeFormat = true
     config.allowedRequests = {}
     config.allowedRequests.enabled = false
     config.allowedRequests.builder = true
@@ -1135,6 +1141,7 @@ timesUpdateDisplay = {}
 VERSION = "0.3.0-dev"
 logging:INFO("Starting up, v" .. VERSION)
 config = loadConfig()
+logging:setLogConfig(config.logging)
 running = true
 timerUpdate = 0
 timerIntervall = 0
