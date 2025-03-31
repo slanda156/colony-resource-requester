@@ -167,7 +167,6 @@ function saveConfig (config)
         logging:DEBUG("Config status: " .. validConfig)
         file.write(prettyJSON(textutils.serializeJSON(createConfig())))
     end
-    logging:INFO("Config saved")
 end
 
 function checkIfDirect (per)
@@ -359,6 +358,8 @@ function callbackTab (tab)
     elseif currentTab > maxTabs then
         currentTab = 0
     end
+    config.lastTab = currentTab
+    saveConfig(config)
     logging:DEBUG("New tab: " .. currentTab)
     lineOffset = 0
 end
@@ -967,7 +968,7 @@ function getInputs(skip)
                     }
                     local existingItem = bridge.getItem({fingerprint=item.fingerprint})
                     local status = "m"
-                    if existingItem ~= nil and #existingItem > 0 then
+                    if existingItem ~= nil and existingItem.fingerprint ~= nil then
                         if item.needed > existingItem.amount then
                             if bridge.isItemCrafting({fingerprint=item.fingerprint}) then
                                 status = "c"
@@ -975,10 +976,16 @@ function getInputs(skip)
                         else
                             status = "a"
                         end
+                        item.status = status
+                        item.available = existingItem.amount
+                        item.missing = item.needed - existingItem.amount
+                        if item.missing < 0 then
+                            item.missing = 0
+                        end
                     else
                         item.status = status
                         item.available = 0
-                        item.missing = 0
+                        item.missing = item.needed
                     end
                     table.insert(allRequests, item)
                 end
@@ -1006,50 +1013,53 @@ function moveItems()
                         bridge.exportItemToPeripheral({fingerprint=item.fingerprint, count=item.needed}, outputInventory)
                     else
                         logging:WARNING("Ouput Inventory not empty")
+                        break
                     end
-                else
-                    logging:DEBUG("Item is available: " .. item.name .. " (" .. item.fingerprint .. "), skipping")
                 end
             elseif item.status == "m" then
                 if bridge.isItemCrafting({fingerprint=item.fingerprint}) then
                     logging:DEBUG("Item is already crafting: " .. item.name .. " (" .. item.fingerprint .. ")")
                 else
-                    if mode == "RS" then
-                        local itenName = ""
-                        local status, err = pcall(function () itemName = bridge.getItem({fingerprint=item.fingerprint}).name end)
-                        if status then
-                            if bridge.isItemCraftable({name=itemName}) then
-                                logging:DEBUG("Crafting item: " .. item.name .. " (" .. item.fingerprint .. ")" .. " Amount: " .. item.missing)
-                                bridge.craftItem({fingerprint=item.fingerprint, count=item.missing})
-                            else
-                                logging:DEBUG("Item not craftable: " .. item.name .. " | " .. itemName .. " (" .. item.fingerprint .. ")")
-                            end
-                        else
-                            logging:DEBUG("Couldn't get item: " .. item.name .. " (" .. item.fingerprint .. ") | Error: " .. err)
-                        end
-                    elseif mode == "ME" then
-                        if freeCPUs > 0 then
-                            local itenName = ""
+                    if item.missing > 0 then
+                        if mode == "RS" then
+                            itenName = ""
                             local status, err = pcall(function () itemName = bridge.getItem({fingerprint=item.fingerprint}).name end)
                             if status then
-                                local itemName = bridge.getItem({fingerprint=item.fingerprint}).name
                                 if bridge.isItemCraftable({name=itemName}) then
                                     logging:DEBUG("Crafting item: " .. item.name .. " (" .. item.fingerprint .. ")" .. " Amount: " .. item.missing)
                                     bridge.craftItem({fingerprint=item.fingerprint, count=item.missing})
-                                    freeCPUs = freeCPUs - 1
                                 else
-                                    if itemName == nil then
-                                        logging:DEBUG("Item has no recipe: " .. item.name .. " (" .. item.fingerprint .. ")")
-                                    else
-                                        logging:DEBUG("Item not craftable: " .. item.name .. " | "  .. itemName .. " (" .. item.fingerprint .. ")")
-                                    end
+                                    logging:DEBUG("Item not craftable: " .. item.name .. " | " .. itemName .. " (" .. item.fingerprint .. ")")
                                 end
                             else
                                 logging:DEBUG("Couldn't get item: " .. item.name .. " (" .. item.fingerprint .. ") | Error: " .. err)
                             end
-                        else
-                            logging:DEBUG("No free Crafting CPUs available")
+                        elseif mode == "ME" then
+                            if freeCPUs > 0 then
+                                itenName = ""
+                                local status, err = pcall(function () itemName = bridge.getItem({fingerprint=item.fingerprint}).name end)
+                                if status then
+                                    local itemName = bridge.getItem({fingerprint=item.fingerprint}).name
+                                    if bridge.isItemCraftable({name=itemName}) then
+                                        logging:DEBUG("Crafting item: " .. item.name .. " (" .. item.fingerprint .. ")" .. " Amount: " .. item.missing)
+                                        bridge.craftItem({fingerprint=item.fingerprint, count=item.missing})
+                                        freeCPUs = freeCPUs - 1
+                                    else
+                                        if itemName == nil then
+                                            logging:DEBUG("Item has no recipe: " .. item.name .. " (" .. item.fingerprint .. ")")
+                                        else
+                                            logging:DEBUG("Item not craftable: " .. item.name .. " | "  .. itemName .. " (" .. item.fingerprint .. ")")
+                                        end
+                                    end
+                                else
+                                    logging:DEBUG("Couldn't get item: " .. item.name .. " (" .. item.fingerprint .. ") | Error: " .. err)
+                                end
+                            else
+                                logging:DEBUG("No free Crafting CPUs available")
+                            end
                         end
+                    else
+                        logging:DEBUG("Item is available: " .. item.name .. " (" .. item.fingerprint .. "), skipping")
                     end
                 end
             end
