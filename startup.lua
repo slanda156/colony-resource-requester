@@ -689,36 +689,36 @@ function updateDisplay (mon)
         -- Research
         mon.setBackgroundColor(colors.gray)
         mon.setTextColor(colors.black)
-        mon.setCursorPos(1, 4)
+        mon.setCursorPos(1, 3)
         mon.write(string.rep(" ", width))
-        mon.setCursorPos(1, 4)
+        mon.setCursorPos(1, 3)
         mon.write("Finished Research:")
         mon.setBackgroundColor(colors.black)
         mon.setTextColor(colors.white)
-        mon.setCursorPos(2, 5)
+        mon.setCursorPos(2, 4)
         for i, res in ipairs(completedResearch) do
             if i - lineOffset > height - 5 then
                 break
             end
             if i - lineOffset >= 1 then
                 mon.write(res.name)
-                mon.setCursorPos(2, 5 + i - lineOffset)
+                mon.setCursorPos(2, 4 + i - lineOffset)
             end
         end
         mon.setBackgroundColor(colors.gray)
         mon.setTextColor(colors.black)
-        mon.setCursorPos(width / 2, 4)
+        mon.setCursorPos(width / 2, 3)
         mon.write("Current Research:")
         mon.setBackgroundColor(colors.black)
         mon.setTextColor(colors.white)
-        mon.setCursorPos(width / 2, 5)
+        mon.setCursorPos(width / 2, 4)
         for i, res in ipairs(currentResearch) do
-            if i - lineOffset > height - 5 then
+            if i - lineOffset > height - 4 then
                 break
             end
             if i - lineOffset >= 1 then
                 mon.write(res.name)
-                mon.setCursorPos(width / 2, 5 + i - lineOffset)
+                mon.setCursorPos(width / 2, 4 + i - lineOffset)
             end
         end
     elseif currentTab == 6 then
