@@ -5,12 +5,13 @@ Logger.__index = Logger
 
 function Logger.new()
     local self = setmetatable({}, Logger)
-    self.logFile = "log.log"
+    self.logFile = "crr.log"
     self.logMode = "a"
     self.logLevel = "DEBUG"
     self.logTimeSource = "local"
     self.logTimeFormat = true
     self.allowedLevels = {DEBUG=0, INFO=1, WARNING=2, ERROR=3}
+    self.firstMsg = true
     return self
 end
 
@@ -53,7 +54,7 @@ function Logger:setLogTimeSource(source)
         print("Invalid log time source, " .. type(source))
         return
     end
-    logTimeSource = source
+    self.logTimeSource = source
 end
 
 function Logger:setLogTimeFormat(format)
@@ -61,7 +62,7 @@ function Logger:setLogTimeFormat(format)
         print("Invalid log time format, " .. type(format))
         return
     end
-    logTimeFormat = format
+    self.logTimeFormat = format
 end
 
 function Logger:setLogFile(file)
@@ -69,7 +70,7 @@ function Logger:setLogFile(file)
         print("Invalid log file, " .. type(file))
         return
     end
-    logFile = file
+    self.logFile = file
 end
 
 function Logger:setLogMode(mode)
@@ -77,10 +78,16 @@ function Logger:setLogMode(mode)
         print("Invalid log mode, " .. type(mode))
         return
     end
-    logMode = mode
+    self.logMode = mode
 end
 
 function Logger:log(level, msg)
+    if self.firstMsg then
+        local file = fs.open(self.logFile, "a")
+        file.write("\n")
+        file.close()
+        self.firstMsg = false
+    end
     if type(level) ~= "string" then
         print("Invalid log level, " .. tostring(level))
         return
