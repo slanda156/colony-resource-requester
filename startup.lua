@@ -874,41 +874,49 @@ function getInputs(skip)
     builderRequests = {}
 
     for _, builder in ipairs(builders) do
-        if not builderRequests[builder.id] then
-            builderRequests[builder.id] = {items={}}
-        end
-        -- Get current build order of each builder
-        if builder.order and builder.order ~= {} then
-            builderRequests[builder.id].order = builder.order
-        end
-        local builderResources = colony.getBuilderResources(builder.pos)
-        for _, builderRequest in ipairs(builderResources) do
-            builderItem = builderRequest.item
-            builderItem.needed = builderRequest.needed
-            builderItem.available = builderRequest.available
-            builderItem.missing = builderRequest.needed - builderRequest.available
-            if builderItem.missing < 0 then
-                builderItem.missing = 0
+        if not validateBuilder(builder) then
+            logging:DEBUG("Invalid builder: " .. textutils.serializeJSON(builder))
+        else
+            if not builderRequests[builder.id] then
+                builderRequests[builder.id] = {items={}}
             end
-            if builderItem.missing > 0 then
-                if builderItem.missing <= builderRequest.delivering then
-                    builderItem.status = "c"
+            -- Get current build order of each builder
+            if builder.order and builder.order ~= {} then
+                builderRequests[builder.id].order = builder.order
+            end
+            local builderResources = colony.getBuilderResources(builder.pos)
+            for _, builderRequest in ipairs(builderResources) do
+                if not validateBuilderRequest(builderRequest) then
+                    logging:DEBUG("Invalid builder request: " .. textutils.serializeJSON(builderRequest))
                 else
-                    builderItem.status = "m"
+                    local builderItem = builderRequest.item
+                    builderItem.needed = builderRequest.needed
+                    builderItem.available = builderRequest.available
+                    builderItem.missing = builderRequest.needed - builderRequest.available
+                    if builderItem.missing < 0 then
+                        builderItem.missing = 0
+                    end
+                    if builderItem.missing > 0 then
+                        if builderItem.missing <= builderRequest.delivering then
+                            builderItem.status = "c"
+                        else
+                            builderItem.status = "m"
+                        end
+                    else
+                        builderItem.status = "a"
+                    end
+                    local skipped = false
+                    if not skipped then
+                        local item = {
+                            name=builderItem.displayName,
+                            fingerprint=builderItem.fingerprint,
+                            needed=builderItem.needed, available=builderItem.available,
+                            missing=builderItem.missing,
+                            status=builderItem.status
+                        }
+                        table.insert(builderRequests[builder.id].items, item)
+                    end
                 end
-            else
-                builderItem.status = "a"
-            end
-            local skipped = false
-            if not skipped then
-                local item = {
-                    name=builderItem.displayName,
-                    fingerprint=builderItem.fingerprint,
-                    needed=builderItem.needed, available=builderItem.available,
-                    missing=builderItem.missing,
-                    status=builderItem.status
-                }
-                table.insert(builderRequests[builder.id].items, item)
             end
         end
     end
@@ -1048,6 +1056,7 @@ function moveItems()
         end
     end
     table.insert(timesMoveItems, os.epoch() - startTime)
+    return true
 end
 
 function sendWifi(msg)
