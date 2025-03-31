@@ -1,4 +1,5 @@
 logging = require("src/logging")
+validating = require("src/validation")
 Button = require("src/widgets").Button
 Group = require("src/widgets").Group
 
@@ -65,35 +66,6 @@ function compareTable (t1, t2)
         end
     end
     return true
-end
-
-function validateConfig (config)
-    if config == nil then -- Invalid config
-        logging:DEBUG("Config is nil")
-        return -1
-    end
-    if config.version == nil then -- Invalid version
-        logging:DEBUG("Config version is nil")
-        return -1
-    end
-    if config.version ~= VERSION then -- Outdated version
-        logging:DEBUG("Config version is outdated")
-        return 0
-    end
-    local modelConfig = createConfig()
-    for key, value in pairs(modelConfig) do
-        if config[key] == nil then
-            logging:DEBUG("Config key missing: " .. key)
-            return -1
-        end
-        if type(value) == "table" then
-            if not compareTable(value, config[key]) then
-                logging:DEBUG("Config key invalid: " .. key)
-                return -1
-            end
-        end
-    end
-    return 1
 end
 
 function createConfig ()
