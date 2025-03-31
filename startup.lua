@@ -636,6 +636,53 @@ function updateDisplay (mon)
             mon.setCursorPos(1, line + 1)
             mon.write("Cost: " .. visitor.recruitCost.count .. " * " .. visitor.recruitCost.displayName)
         end
+    elseif currentTab == 4 then
+        -- Buildings
+        for i, building in ipairs(buildings) do
+            mon.setBackgroundColor(colors.lightGray)
+            mon.setTextColor(colors.black)
+            local line = 4 + i - 1 - lineOffset
+            if i - lineOffset > height - 3 then
+                break
+            end
+            mon.setCursorPos(1, 3)
+            mon.write(string.rep(" ", width))
+            mon.setCursorPos(1, 3)
+            -- no | style | type | (level|maxLevel) | priority
+            mon.write("No | Style" .. string.rep(" ", #building.style - 6) .. "| Type")
+            local msg = "(Level|MaxLevel) | P"
+            mon.setCursorPos(width - #msg, 3)
+            mon.write(msg)
+            if i - lineOffset >= 1 then
+                -- textcolor: green: ok, yellow: upgrading, orange: not guarded, red: not built
+                -- style .. " " .. type .. " (" .. level .. "|" .. maxLevel .. ") P: " .. priority
+                mon.setCursorPos(1, line)
+                mon.write(string.rep(" ", width))
+                mon.setCursorPos(1, line)
+                local c = colors.green
+                if not building.built then
+                    c = colors.red
+                elseif not building.guarded then
+                    c = colors.orange
+                elseif building.isWorkingOn then
+                    c = colors.yellow
+                end
+                mon.setTextColor(c)
+                local iStr = tostring(i)
+                mon.write(iStr .. string.rep(" ", 4 - #iStr) .. building.style .. " " .. building.type)
+                local msg = "(" .. building.level .. "|" .. building.maxLevel .. ") | " .. building.priority
+                mon.setCursorPos(width - #msg, line)
+                mon.write(msg)
+                mon.setBackgroundColor(colors.black)
+                mon.setCursorPos(1, height)
+                mon.setTextColor(colors.green)
+                mon.write("OK")
+                mon.setTextColor(colors.yellow)
+                mon.write(" Upgrading")
+                mon.setTextColor(colors.orange)
+                mon.write(" Not Guarded")
+                mon.setTextColor(colors.red)
+                mon.write(" Not Built")
             end
         end
     elseif currentTab == 5 then
@@ -790,6 +837,7 @@ function getInputs(skip)
         end
     end
     buildingsCount = #colony.getBuildings()
+    buildings = colony.getBuildings()
     maxCitizens = colony.maxOfCitizens()
     happiness = colony.getHappiness()
     underAttack = colony.isUnderAttack()
