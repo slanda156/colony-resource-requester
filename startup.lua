@@ -300,10 +300,11 @@ function getPeripherals ()
                     outputInventory = p
                     logging:INFO("Output inventory found")
                     logging:DEBUG("Output inventory: " .. p)
-                    break
+                    goto outputFound
                 end
             end
         end
+        ::outputFound::
         if not found then
             mode = "NI"
             logging:ERROR("No output inventory found")
@@ -323,7 +324,7 @@ function callbackRefresh ()
     local success = true
     if widgets.autoButton.active then
         success = moveItems()
-        if success == false then
+        if not success then
             mode = "NI"
         end
     end
