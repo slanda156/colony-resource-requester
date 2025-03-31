@@ -619,25 +619,23 @@ function updateDisplay (mon)
         mon.write(" Health < 50%")
     elseif currentTab == 3 then
         -- Visitors
-        mon.setBackgroundColor(colors.gray)
         mon.setTextColor(colors.black)
         for i, visitor in ipairs(visitors) do
-            local line = 4 + i - lineOffset
+            local line = 4 + (i-1) * 2 - lineOffset
             if i - lineOffset > height - 3 then
                 break
             end
-            if line > 2 then
-                mon.setCursorPos(1, line)
-                mon.write(string.rep(" ", width))
-                mon.setCursorPos(1, line)
-                mon.write(visitor.name)
-            end
-            if line + 1 > 2 then
-                mon.setCursorPos(1, line + 1)
-                mon.setBackgroundColor(colors.lightGray)
-                mon.write(string.rep(" ", width))
-                mon.setCursorPos(1, line + 1)
-                mon.write("Cost: " .. visitor.recruitCost.amount .. " * " .. visitor.recruitCost.displayName)
+            mon.setBackgroundColor(colors.gray)
+            mon.setCursorPos(1, line)
+            mon.write(string.rep(" ", width))
+            mon.setCursorPos(1, line)
+            mon.write(visitor.name)
+            mon.setCursorPos(1, line + 1)
+            mon.setBackgroundColor(colors.lightGray)
+            mon.write(string.rep(" ", width))
+            mon.setCursorPos(1, line + 1)
+            mon.write("Cost: " .. visitor.recruitCost.count .. " * " .. visitor.recruitCost.displayName)
+        end
             end
         end
     elseif currentTab == 5 then
