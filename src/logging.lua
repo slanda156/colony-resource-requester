@@ -1,5 +1,17 @@
 local allLevels = {DEBUG=0, INFO=1, WARNING=2, ERROR=3}
 
+-- https://stackoverflow.com/questions/640642/how-do-you-copy-a-lua-table-by-value
+function copy(obj, seen)
+    if type(obj) ~= 'table' then return obj end
+    if seen and seen[obj] then return seen[obj] end
+    local s = seen or {}
+    local res = setmetatable({}, getmetatable(obj))
+    s[obj] = res
+    for k, v in pairs(obj) do res[copy(k, s)] = copy(v, s) end
+    return res
+  end
+
+
 local Logger = {}
 Logger.__index = Logger
 
@@ -10,7 +22,7 @@ function Logger.new()
     self.logLevel = "DEBUG"
     self.logTimeSource = "local"
     self.logTimeFormat = true
-    self.allowedLevels = {DEBUG=0, INFO=1, WARNING=2, ERROR=3}
+    self.allowedLevels = copy(allLevels)
     self.firstMsg = true
     return self
 end
@@ -29,14 +41,16 @@ end
 
 function Logger:setLogLevel(level)
     if type(level) ~= "string" then
-        print("Invalid log level")
+        self:ERROR("Invalid log level type, " .. type(level))
         return
     end
+    self:INFO(textutils.serializeJSON(allLevels))
     if allLevels[level] == nil then
-        print("Invalid log level")
+        self:ERROR("Invalid log level, " .. level)
         return
     end
     self.logLevel = level
+    self.allowedLevels = copy(allLevels)
     if self.logLevel == "INFO" then
         self.allowedLevels["DEBUG"] = nil
     elseif self.logLevel == "WARNING" then
