@@ -120,9 +120,11 @@ end
 
 function loadConfig ()
     local config = {}
+    local newConfig = createConfig()
+    logging:setLogConfig(newConfig.logging)
     if not fs.exists("config.json") then
         logging:INFO("No config file found, creating default config")
-        config = createConfig()
+        config = newConfig
         saveConfig(config)
     else
         local file = fs.open("config.json", "r")
@@ -134,43 +136,45 @@ function loadConfig ()
                 logging:ERROR("Couldn't parse config file, using default config")
                 logging:DEBUG("Error: " .. err)
                 shell.run("rename", "config.json", "config.json.bak")
-                config = createConfig()
+                config = newConfig
+                config.logging.logLevel = "DEBUG"
                 saveConfig(config)
             else
                 local validResult = validateConfig(config)
                 -- 1: Valid, 0: Outdated, -1: Invalid
                 if validResult == 1 then
+                    logging:setLogConfig(config.logging)
                     logging:INFO("Config loaded")
                 elseif validResult == 0 then
                     logging:WARNING("Config is outdated, updating")
                     logging:DEBUG("Old config version: " .. config.version)
                     shell.run("rename", "config.json", "config.json.bak")
-                    local newConfig = createConfig()
+                    local refConfig = createConfig()
                     for key, value in pairs(config) do
                         -- Insert here when config keys are renamed
-                        if newConfig[key] == nil then
-                            loegging.log("WARNING", "Removing outdated config key: " .. key)
+                        if refConfig[key] == nil then
+                            logging:WARNING("Removing outdated config key: " .. key)
                         elseif key ~= "version" then
                             if type(value) == "table" then
-                                newConfig[key] = mergeTable(newConfig[key], value)
+                                refConfig[key] = mergeTable(refConfig[key], value)
                             else
-                                newConfig[key] = value
+                                refConfig[key] = value
                             end
                         end
                     end
-                    config = newConfig
+                    config = refConfig
                     saveConfig(config)
                 elseif validResult == -1 then
                     logging:ERROR("Invalid config, using default config")
                     shell.run("rename", "config.json", "config.json.bak")
-                    config = createConfig()
+                    config = newConfig
                     saveConfig(config)
                 end
             end
         else
             logging:ERROR("Couldn't open config file, using default config")
             shell.run("rename", "config.json", "config.json.bak")
-            config = createConfig()
+            config = newConfig
             saveConfig(config)
         end
     end
@@ -1139,9 +1143,8 @@ timesGetInputs = {}
 timesUpdateDisplay = {}
 -- Start up
 VERSION = "0.3.0-dev"
-logging:INFO("Starting up, v" .. VERSION)
 config = loadConfig()
-logging:setLogConfig(config.logging)
+logging:INFO("Starting up, v" .. VERSION)
 running = true
 timerUpdate = 0
 timerIntervall = 0
