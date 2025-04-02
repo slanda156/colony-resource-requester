@@ -11,6 +11,7 @@ function Logger.new()
     self.logTimeSource = "local"
     self.logTimeFormat = true
     self.allowedLevels = {DEBUG=0, INFO=1, WARNING=2, ERROR=3}
+    self.colorLevels = {DEBUG=colors.lightBlue, INFO=colors.lime, WARNING=colors.yellow, ERROR=colors.red}
     return self
 end
 
@@ -90,8 +91,11 @@ function Logger:log(level, msg)
         return
     end
     if self.allowedLevels[level] ~= nil then
+        local lastColor = term.getTextColor()
+        term.setTextColor(self.colorLevels[level])
         local finalMsg = textutils.formatTime(os.time(self.logTimeSource), self.logTimeFormat) .. " - " .. level .. " - " ..  msg
         print(finalMsg)
+        term.setTextColor(lastColor)
         local file = fs.open(self.logFile, "a")
         if type(file) == "string" then
             print("Couldn't open log file")
