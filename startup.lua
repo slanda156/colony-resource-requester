@@ -1,4 +1,5 @@
 logging = require("src/logging")
+validating = require("src/validation")
 Button = require("src/widgets").Button
 Group = require("src/widgets").Group
 
@@ -67,35 +68,6 @@ function compareTable (t1, t2)
     return true
 end
 
-function validateConfig (config)
-    if config == nil then -- Invalid config
-        logging:DEBUG("Config is nil")
-        return -1
-    end
-    if config.version == nil then -- Invalid version
-        logging:DEBUG("Config version is nil")
-        return -1
-    end
-    if config.version ~= VERSION then -- Outdated version
-        logging:DEBUG("Config version is outdated")
-        return 0
-    end
-    local modelConfig = createConfig()
-    for key, value in pairs(modelConfig) do
-        if config[key] == nil then
-            logging:DEBUG("Config key missing: " .. key)
-            return -1
-        end
-        if type(value) == "table" then
-            if not compareTable(value, config[key]) then
-                logging:DEBUG("Config key invalid: " .. key)
-                return -1
-            end
-        end
-    end
-    return 1
-end
-
 function createConfig ()
     local config = {}
     config.version = VERSION
@@ -120,9 +92,11 @@ end
 
 function loadConfig ()
     local config = {}
+    local newConfig = createConfig()
+    logging:setLogConfig(newConfig.logging)
     if not fs.exists("config.json") then
         logging:INFO("No config file found, creating default config")
-        config = createConfig()
+        config = newConfig
         saveConfig(config)
     else
         local file = fs.open("config.json", "r")
@@ -134,43 +108,45 @@ function loadConfig ()
                 logging:ERROR("Couldn't parse config file, using default config")
                 logging:DEBUG("Error: " .. err)
                 shell.run("rename", "config.json", "config.json.bak")
-                config = createConfig()
+                config = newConfig
+                config.logging.logLevel = "DEBUG"
                 saveConfig(config)
             else
                 local validResult = validateConfig(config)
                 -- 1: Valid, 0: Outdated, -1: Invalid
                 if validResult == 1 then
+                    logging:setLogConfig(config.logging)
                     logging:INFO("Config loaded")
                 elseif validResult == 0 then
                     logging:WARNING("Config is outdated, updating")
                     logging:DEBUG("Old config version: " .. config.version)
                     shell.run("rename", "config.json", "config.json.bak")
-                    local newConfig = createConfig()
+                    local refConfig = createConfig()
                     for key, value in pairs(config) do
                         -- Insert here when config keys are renamed
-                        if newConfig[key] == nil then
-                            loegging.log("WARNING", "Removing outdated config key: " .. key)
+                        if refConfig[key] == nil then
+                            logging:WARNING("Removing outdated config key: " .. key)
                         elseif key ~= "version" then
                             if type(value) == "table" then
-                                newConfig[key] = mergeTable(newConfig[key], value)
+                                refConfig[key] = mergeTable(refConfig[key], value)
                             else
-                                newConfig[key] = value
+                                refConfig[key] = value
                             end
                         end
                     end
-                    config = newConfig
+                    config = refConfig
                     saveConfig(config)
                 elseif validResult == -1 then
                     logging:ERROR("Invalid config, using default config")
                     shell.run("rename", "config.json", "config.json.bak")
-                    config = createConfig()
+                    config = newConfig
                     saveConfig(config)
                 end
             end
         else
             logging:ERROR("Couldn't open config file, using default config")
             shell.run("rename", "config.json", "config.json.bak")
-            config = createConfig()
+            config = newConfig
             saveConfig(config)
         end
     end
@@ -191,7 +167,6 @@ function saveConfig (config)
         logging:DEBUG("Config status: " .. validConfig)
         file.write(prettyJSON(textutils.serializeJSON(createConfig())))
     end
-    logging:INFO("Config saved")
 end
 
 function checkIfDirect (per)
@@ -324,10 +299,11 @@ function getPeripherals ()
                     outputInventory = p
                     logging:INFO("Output inventory found")
                     logging:DEBUG("Output inventory: " .. p)
-                    break
+                    goto outputFound
                 end
             end
         end
+        ::outputFound::
         if not found then
             mode = "NI"
             logging:ERROR("No output inventory found")
@@ -347,7 +323,7 @@ function callbackRefresh ()
     local success = true
     if widgets.autoButton.active then
         success = moveItems()
-        if success == false then
+        if not success then
             mode = "NI"
         end
     end
@@ -382,6 +358,8 @@ function callbackTab (tab)
     elseif currentTab > maxTabs then
         currentTab = 0
     end
+    config.lastTab = currentTab
+    saveConfig(config)
     logging:DEBUG("New tab: " .. currentTab)
     lineOffset = 0
 end
@@ -642,47 +620,106 @@ function updateDisplay (mon)
         mon.write(" Health < 50%")
     elseif currentTab == 3 then
         -- Visitors
-        mon.setBackgroundColor(colors.gray)
         mon.setTextColor(colors.black)
         for i, visitor in ipairs(visitors) do
-            local line = 4 + i - lineOffset
+            local line = 4 + (i-1) * 2 - lineOffset
             if i - lineOffset > height - 3 then
                 break
             end
-            if line > 2 then
-                mon.setCursorPos(1, line)
-                mon.write(string.rep(" ", width))
-                mon.setCursorPos(1, line)
-                mon.write(visitor.name)
+            mon.setBackgroundColor(colors.gray)
+            mon.setCursorPos(1, line)
+            mon.write(string.rep(" ", width))
+            mon.setCursorPos(1, line)
+            mon.write(visitor.name)
+            mon.setCursorPos(1, line + 1)
+            mon.setBackgroundColor(colors.lightGray)
+            mon.write(string.rep(" ", width))
+            mon.setCursorPos(1, line + 1)
+            mon.write("Cost: " .. visitor.recruitCost.count .. " * " .. visitor.recruitCost.displayName)
+        end
+    elseif currentTab == 4 then
+        -- Buildings
+        for i, building in ipairs(buildings) do
+            mon.setBackgroundColor(colors.lightGray)
+            mon.setTextColor(colors.black)
+            local line = 4 + i - 1 - lineOffset
+            if i - lineOffset > height - 3 then
+                break
             end
-            if line + 1 > 2 then
-                mon.setCursorPos(1, line + 1)
-                mon.setBackgroundColor(colors.lightGray)
+            mon.setCursorPos(1, 3)
+            mon.write(string.rep(" ", width))
+            mon.setCursorPos(1, 3)
+            -- no | style | type | (level|maxLevel) | priority
+            mon.write("No | Style" .. string.rep(" ", #building.style - 6) .. "| Type")
+            local msg = "(Level|MaxLevel) | P"
+            mon.setCursorPos(width - #msg, 3)
+            mon.write(msg)
+            if i - lineOffset >= 1 then
+                -- textcolor: green: ok, yellow: upgrading, orange: not guarded, red: not built
+                -- style .. " " .. type .. " (" .. level .. "|" .. maxLevel .. ") P: " .. priority
+                mon.setCursorPos(1, line)
                 mon.write(string.rep(" ", width))
-                mon.setCursorPos(1, line + 1)
-                mon.write("Cost: " .. visitor.recruitCost.amount .. " * " .. visitor.recruitCost.displayName)
+                mon.setCursorPos(1, line)
+                local c = colors.green
+                if not building.built then
+                    c = colors.red
+                elseif not building.guarded then
+                    c = colors.orange
+                elseif building.isWorkingOn then
+                    c = colors.yellow
+                end
+                mon.setTextColor(c)
+                local iStr = tostring(i)
+                mon.write(iStr .. string.rep(" ", 4 - #iStr) .. building.style .. " " .. building.type)
+                local msg = "(" .. building.level .. "|" .. building.maxLevel .. ") | " .. building.priority
+                mon.setCursorPos(width - #msg, line)
+                mon.write(msg)
+                mon.setBackgroundColor(colors.black)
+                mon.setCursorPos(1, height)
+                mon.setTextColor(colors.green)
+                mon.write("OK")
+                mon.setTextColor(colors.yellow)
+                mon.write(" Upgrading")
+                mon.setTextColor(colors.orange)
+                mon.write(" Not Guarded")
+                mon.setTextColor(colors.red)
+                mon.write(" Not Built")
             end
         end
     elseif currentTab == 5 then
         -- Research
         mon.setBackgroundColor(colors.gray)
         mon.setTextColor(colors.black)
-        mon.setCursorPos(1, 4)
+        mon.setCursorPos(1, 3)
         mon.write(string.rep(" ", width))
-        mon.setCursorPos(1, 4)
-        mon.setBackgroundColor(colors.gray)
-        mon.setTextColor(colors.black)
-        mon.write("Current Research:")
+        mon.setCursorPos(1, 3)
+        mon.write("Finished Research:")
         mon.setBackgroundColor(colors.black)
         mon.setTextColor(colors.white)
-        mon.setCursorPos(1, 5)
-        for i, res in ipairs(currentResearch) do
+        mon.setCursorPos(2, 4)
+        for i, res in ipairs(completedResearch) do
             if i - lineOffset > height - 5 then
                 break
             end
             if i - lineOffset >= 1 then
                 mon.write(res.name)
-                mon.setCursorPos(1, 5 + i - lineOffset)
+                mon.setCursorPos(2, 4 + i - lineOffset)
+            end
+        end
+        mon.setBackgroundColor(colors.gray)
+        mon.setTextColor(colors.black)
+        mon.setCursorPos(width / 2, 3)
+        mon.write("Current Research:")
+        mon.setBackgroundColor(colors.black)
+        mon.setTextColor(colors.white)
+        mon.setCursorPos(1, 4)
+        for i, res in ipairs(currentResearch) do
+            if i - lineOffset > height - 4 then
+                break
+            end
+            if i - lineOffset >= 1 then
+                mon.write(res.name)
+                mon.setCursorPos(width / 2, 4 + i - lineOffset)
             end
         end
     elseif currentTab == 6 then
@@ -801,6 +838,7 @@ function getInputs(skip)
         end
     end
     buildingsCount = #colony.getBuildings()
+    buildings = colony.getBuildings()
     maxCitizens = colony.maxOfCitizens()
     happiness = colony.getHappiness()
     underAttack = colony.isUnderAttack()
@@ -837,41 +875,49 @@ function getInputs(skip)
     builderRequests = {}
 
     for _, builder in ipairs(builders) do
-        if not builderRequests[builder.id] then
-            builderRequests[builder.id] = {items={}}
-        end
-        -- Get current build order of each builder
-        if builder.order and builder.order ~= {} then
-            builderRequests[builder.id].order = builder.order
-        end
-        local builderResources = colony.getBuilderResources(builder.pos)
-        for _, builderRequest in ipairs(builderResources) do
-            builderItem = builderRequest.item
-            builderItem.needed = builderRequest.needed
-            builderItem.available = builderRequest.available
-            builderItem.missing = builderRequest.needed - builderRequest.available
-            if builderItem.missing < 0 then
-                builderItem.missing = 0
+        if not validateBuilder(builder) then
+            logging:DEBUG("Invalid builder: " .. textutils.serializeJSON(builder))
+        else
+            if not builderRequests[builder.id] then
+                builderRequests[builder.id] = {items={}}
             end
-            if builderItem.missing > 0 then
-                if builderItem.missing <= builderRequest.delivering then
-                    builderItem.status = "c"
+            -- Get current build order of each builder
+            if builder.order and builder.order ~= {} then
+                builderRequests[builder.id].order = builder.order
+            end
+            local builderResources = colony.getBuilderResources(builder.pos)
+            for _, builderRequest in ipairs(builderResources) do
+                if not validateBuilderRequest(builderRequest) then
+                    logging:DEBUG("Invalid builder request: " .. textutils.serializeJSON(builderRequest))
                 else
-                    builderItem.status = "m"
+                    local builderItem = builderRequest.item
+                    builderItem.needed = builderRequest.needed
+                    builderItem.available = builderRequest.available
+                    builderItem.missing = builderRequest.needed - builderRequest.available
+                    if builderItem.missing < 0 then
+                        builderItem.missing = 0
+                    end
+                    if builderItem.missing > 0 then
+                        if builderItem.missing <= builderRequest.delivering then
+                            builderItem.status = "c"
+                        else
+                            builderItem.status = "m"
+                        end
+                    else
+                        builderItem.status = "a"
+                    end
+                    local skipped = false
+                    if not skipped then
+                        local item = {
+                            name=builderItem.displayName,
+                            fingerprint=builderItem.fingerprint,
+                            needed=builderItem.needed, available=builderItem.available,
+                            missing=builderItem.missing,
+                            status=builderItem.status
+                        }
+                        table.insert(builderRequests[builder.id].items, item)
+                    end
                 end
-            else
-                builderItem.status = "a"
-            end
-            local skipped = false
-            if not skipped then
-                local item = {
-                    name=builderItem.displayName,
-                    fingerprint=builderItem.fingerprint,
-                    needed=builderItem.needed, available=builderItem.available,
-                    missing=builderItem.missing,
-                    status=builderItem.status
-                }
-                table.insert(builderRequests[builder.id].items, item)
             end
         end
     end
@@ -922,7 +968,7 @@ function getInputs(skip)
                     }
                     local existingItem = bridge.getItem({fingerprint=item.fingerprint})
                     local status = "m"
-                    if existingItem ~= nil and #existingItem > 0 then
+                    if existingItem ~= nil and existingItem.fingerprint ~= nil then
                         if item.needed > existingItem.amount then
                             if bridge.isItemCrafting({fingerprint=item.fingerprint}) then
                                 status = "c"
@@ -930,10 +976,16 @@ function getInputs(skip)
                         else
                             status = "a"
                         end
+                        item.status = status
+                        item.available = existingItem.amount
+                        item.missing = item.needed - existingItem.amount
+                        if item.missing < 0 then
+                            item.missing = 0
+                        end
                     else
                         item.status = status
                         item.available = 0
-                        item.missing = 0
+                        item.missing = item.needed
                     end
                     table.insert(allRequests, item)
                 end
@@ -961,56 +1013,60 @@ function moveItems()
                         bridge.exportItemToPeripheral({fingerprint=item.fingerprint, count=item.needed}, outputInventory)
                     else
                         logging:WARNING("Ouput Inventory not empty")
+                        break
                     end
-                else
-                    logging:DEBUG("Item is available: " .. item.name .. " (" .. item.fingerprint .. "), skipping")
                 end
             elseif item.status == "m" then
                 if bridge.isItemCrafting({fingerprint=item.fingerprint}) then
                     logging:DEBUG("Item is already crafting: " .. item.name .. " (" .. item.fingerprint .. ")")
                 else
-                    if mode == "RS" then
-                        local itenName = ""
-                        local status, err = pcall(function () itemName = bridge.getItem({fingerprint=item.fingerprint}).name end)
-                        if status then
-                            if bridge.isItemCraftable({name=itemName}) then
-                                logging:DEBUG("Crafting item: " .. item.name .. " (" .. item.fingerprint .. ")" .. " Amount: " .. item.missing)
-                                bridge.craftItem({fingerprint=item.fingerprint, count=item.missing})
-                            else
-                                logging:DEBUG("Item not craftable: " .. item.name .. " | " .. itemName .. " (" .. item.fingerprint .. ")")
-                            end
-                        else
-                            logging:DEBUG("Couldn't get item: " .. item.name .. " (" .. item.fingerprint .. ") | Error: " .. err)
-                        end
-                    elseif mode == "ME" then
-                        if freeCPUs > 0 then
-                            local itenName = ""
+                    if item.missing > 0 then
+                        if mode == "RS" then
+                            itenName = ""
                             local status, err = pcall(function () itemName = bridge.getItem({fingerprint=item.fingerprint}).name end)
                             if status then
-                                local itemName = bridge.getItem({fingerprint=item.fingerprint}).name
                                 if bridge.isItemCraftable({name=itemName}) then
                                     logging:DEBUG("Crafting item: " .. item.name .. " (" .. item.fingerprint .. ")" .. " Amount: " .. item.missing)
                                     bridge.craftItem({fingerprint=item.fingerprint, count=item.missing})
-                                    freeCPUs = freeCPUs - 1
                                 else
-                                    if itemName == nil then
-                                        logging:DEBUG("Item has no recipe: " .. item.name .. " (" .. item.fingerprint .. ")")
-                                    else
-                                        logging:DEBUG("Item not craftable: " .. item.name .. " | "  .. itemName .. " (" .. item.fingerprint .. ")")
-                                    end
+                                    logging:DEBUG("Item not craftable: " .. item.name .. " | " .. itemName .. " (" .. item.fingerprint .. ")")
                                 end
                             else
                                 logging:DEBUG("Couldn't get item: " .. item.name .. " (" .. item.fingerprint .. ") | Error: " .. err)
                             end
-                        else
-                            logging:DEBUG("No free Crafting CPUs available")
+                        elseif mode == "ME" then
+                            if freeCPUs > 0 then
+                                itenName = ""
+                                local status, err = pcall(function () itemName = bridge.getItem({fingerprint=item.fingerprint}).name end)
+                                if status then
+                                    local itemName = bridge.getItem({fingerprint=item.fingerprint}).name
+                                    if bridge.isItemCraftable({name=itemName}) then
+                                        logging:DEBUG("Crafting item: " .. item.name .. " (" .. item.fingerprint .. ")" .. " Amount: " .. item.missing)
+                                        bridge.craftItem({fingerprint=item.fingerprint, count=item.missing})
+                                        freeCPUs = freeCPUs - 1
+                                    else
+                                        if itemName == nil then
+                                            logging:DEBUG("Item has no recipe: " .. item.name .. " (" .. item.fingerprint .. ")")
+                                        else
+                                            logging:DEBUG("Item not craftable: " .. item.name .. " | "  .. itemName .. " (" .. item.fingerprint .. ")")
+                                        end
+                                    end
+                                else
+                                    logging:DEBUG("Couldn't get item: " .. item.name .. " (" .. item.fingerprint .. ") | Error: " .. err)
+                                end
+                            else
+                                logging:DEBUG("No free Crafting CPUs available")
+                            end
                         end
+                    else
+                        logging:DEBUG("Item is available: " .. item.name .. " (" .. item.fingerprint .. "), skipping")
                     end
                 end
             end
         end
     end
     table.insert(timesMoveItems, os.epoch() - startTime)
+    return true
 end
 
 function sendWifi(msg)
@@ -1125,9 +1181,8 @@ timesGetInputs = {}
 timesUpdateDisplay = {}
 -- Start up
 VERSION = "0.3.0-dev"
-logging:INFO("Starting up, v" .. VERSION)
 config = loadConfig()
-logging:setLogConfig(config.logging)
+logging:INFO("Starting up, v" .. VERSION)
 running = true
 timerUpdate = 0
 timerIntervall = 0

@@ -1,16 +1,29 @@
 local allLevels = {DEBUG=0, INFO=1, WARNING=2, ERROR=3}
 
+-- https://stackoverflow.com/questions/640642/how-do-you-copy-a-lua-table-by-value
+function copy(obj, seen)
+    if type(obj) ~= 'table' then return obj end
+    if seen and seen[obj] then return seen[obj] end
+    local s = seen or {}
+    local res = setmetatable({}, getmetatable(obj))
+    s[obj] = res
+    for k, v in pairs(obj) do res[copy(k, s)] = copy(v, s) end
+    return res
+  end
+
+
 local Logger = {}
 Logger.__index = Logger
 
 function Logger.new()
     local self = setmetatable({}, Logger)
-    self.logFile = "log.log"
+    self.logFile = "crr.log"
     self.logMode = "a"
     self.logLevel = "DEBUG"
     self.logTimeSource = "local"
     self.logTimeFormat = true
-    self.allowedLevels = {DEBUG=0, INFO=1, WARNING=2, ERROR=3}
+    self.allowedLevels = copy(allLevels)
+    self.firstMsg = true
     self.colorLevels = {DEBUG=colors.lightBlue, INFO=colors.lime, WARNING=colors.yellow, ERROR=colors.red}
     return self
 end
@@ -29,14 +42,16 @@ end
 
 function Logger:setLogLevel(level)
     if type(level) ~= "string" then
-        print("Invalid log level")
+        self:ERROR("Invalid log level type, " .. type(level))
         return
     end
+    self:INFO(textutils.serializeJSON(allLevels))
     if allLevels[level] == nil then
-        print("Invalid log level")
+        self:ERROR("Invalid log level, " .. level)
         return
     end
     self.logLevel = level
+    self.allowedLevels = copy(allLevels)
     if self.logLevel == "INFO" then
         self.allowedLevels["DEBUG"] = nil
     elseif self.logLevel == "WARNING" then
@@ -54,7 +69,7 @@ function Logger:setLogTimeSource(source)
         print("Invalid log time source, " .. type(source))
         return
     end
-    logTimeSource = source
+    self.logTimeSource = source
 end
 
 function Logger:setLogTimeFormat(format)
@@ -62,7 +77,7 @@ function Logger:setLogTimeFormat(format)
         print("Invalid log time format, " .. type(format))
         return
     end
-    logTimeFormat = format
+    self.logTimeFormat = format
 end
 
 function Logger:setLogFile(file)
@@ -70,7 +85,7 @@ function Logger:setLogFile(file)
         print("Invalid log file, " .. type(file))
         return
     end
-    logFile = file
+    self.logFile = file
 end
 
 function Logger:setLogMode(mode)
@@ -78,10 +93,16 @@ function Logger:setLogMode(mode)
         print("Invalid log mode, " .. type(mode))
         return
     end
-    logMode = mode
+    self.logMode = mode
 end
 
 function Logger:log(level, msg)
+    if self.firstMsg then
+        local file = fs.open(self.logFile, "a")
+        file.write("\n")
+        file.close()
+        self.firstMsg = false
+    end
     if type(level) ~= "string" then
         print("Invalid log level, " .. tostring(level))
         return
