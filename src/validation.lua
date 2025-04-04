@@ -68,3 +68,71 @@ function validateBuilder(builder)
     end
     return true
 end
+
+function validateBridgeItem(item)
+    if item == nil then
+        logging:ERROR("bridgeItem is nil")
+        return false
+    end
+    if item.name == nil then
+        logging:ERROR("bridgeItem.name is nil")
+        return false
+    end
+    if item.fingerprint == nil then
+        logging:ERROR("bridgeItem.fingerprint is nil")
+        return false
+    end
+    if item.amount == nil then
+        logging:DEBUG("bridgeItem.amount is nil")
+        item.amount = 0
+    end
+    if item.displayName == nil then
+        logging:DEBUG("bridgeItem.displayName is nil")
+        item.displayName = item.name
+    end
+    if item.isCraftable == nil then
+        logging:DEBUG("bridgeItem.isCraftable is nil")
+        item.isCraftable = false
+    end
+    if item.nbt == nil then
+        logging:DEBUG("bridgeItem.nbt is nil")
+        item.nbt = ""
+    end
+    if item.tags == nil then
+        logging:DEBUG("bridgeItem.tags is nil")
+        item.tags = {}
+    end
+    return true
+end
+
+function validateRequestItem(item)
+    if item == nil then
+        logging:ERROR("requestItem is nil")
+        return false
+    end
+    if item.item == nil then
+        logging:ERROR("requestItem.item is nil")
+        return false
+    end
+    if item.displayName == nil then
+        logging:DEBUG("requestItem.displayName is nil")
+        item.displayName = item.item
+    end
+    if item.status == nil then
+        logging:ERROR("requestItem.status is nil")
+        return false
+    end
+    if item.needed == nil and type(item.needed) ~= "number" then
+        logging:DEBUG("requestItem.needed is nil or not a number")
+        item.needed = 0
+    end
+    if item.available == nil and type(item.available) ~= "boolean" then
+        logging:DEBUG("requestItem.available is nil or not a boolean")
+        item.available = false
+    end
+    if item.delivering == nil and type(item.delivering) ~= "boolean" then
+        logging:DEBUG("requestItem.delivering is nil or not a boolean")
+        item.delivering = false
+    end
+    return true
+end

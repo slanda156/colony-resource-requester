@@ -1014,53 +1014,55 @@ function getInputs(skip)
         end
         if allowed then
             for _, itemRequest in ipairs(request.items) do
-                local skipped = false
-                for _, allRequest in ipairs(allRequests) do
-                    if allRequest.fingerprint == itemRequest.fingerprint then
-                        allRequest.needed = allRequest.needed + itemRequest.count
-                        skipped = true
-                        break
-                    end
-                end
-                if not skipped then
-                    local item = {
-                        name=itemRequest.displayName,
-                        fingerprint=itemRequest.fingerprint,
-                        needed=itemRequest.count * request.count
-                    }
-                    if mode ~= "DP" then
-                        local existingItem = bridge.getItem({fingerprint=item.fingerprint})
-                        local status = "m"
-                        if existingItem ~= nil and existingItem.fingerprint ~= nil then
-                            if item.needed > existingItem.amount then
-                                if bridge.isItemCrafting({fingerprint=item.fingerprint}) then
-                                    status = "c"
-                                end
-                            else
-                                status = "a"
-                            end
-                            item.status = status
-                            item.available = existingItem.amount
-                            item.missing = item.needed - existingItem.amount
-                            if item.missing < 0 then
-                                item.missing = 0
-                            end
-                        else
-                            item.status = status
-                            item.available = 0
-                            item.missing = item.needed
+                if validateRequestItem(itemRequest) then
+                    local skipped = false
+                    for _, allRequest in ipairs(allRequests) do
+                        if allRequest.fingerprint == itemRequest.fingerprint then
+                            allRequest.needed = allRequest.needed + itemRequest.count
+                            skipped = true
+                            break
                         end
-                        table.insert(allRequests, item)
-                    else
+                    end
+                    if not skipped then
                         local item = {
                             name=itemRequest.displayName,
                             fingerprint=itemRequest.fingerprint,
-                            needed=itemRequest.count * request.count,
-                            status="m",
-                            available=0,
-                            missing=itemRequest.count * request.count
+                            needed=itemRequest.count * request.count
                         }
-                        table.insert(allRequests, item)
+                        if mode ~= "DP" then
+                            local existingItem = bridge.getItem({fingerprint=item.fingerprint})
+                            local status = "m"
+                            if validateBridgeItem(existingItem) then
+                                if item.needed > existingItem.amount then
+                                    if bridge.isItemCrafting({fingerprint=item.fingerprint}) then
+                                        status = "c"
+                                    end
+                                else
+                                    status = "a"
+                                end
+                                item.status = status
+                                item.available = existingItem.amount
+                                item.missing = item.needed - existingItem.amount
+                                if item.missing < 0 then
+                                    item.missing = 0
+                                end
+                            else
+                                item.status = status
+                                item.available = 0
+                                item.missing = item.needed
+                            end
+                            table.insert(allRequests, item)
+                        else
+                            local item = {
+                                name=itemRequest.displayName,
+                                fingerprint=itemRequest.fingerprint,
+                                needed=itemRequest.count * request.count,
+                                status="m",
+                                available=0,
+                                missing=itemRequest.count * request.count
+                            }
+                            table.insert(allRequests, item)
+                        end
                     end
                 end
             end
