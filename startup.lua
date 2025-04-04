@@ -319,7 +319,7 @@ end
 
 function callbackRefresh ()
     logging:DEBUG("Refresh callback")
-    getInputs()
+    getInputs(false)
     local success = true
     if widgets.autoButton.active then
         success = moveItems()
@@ -557,9 +557,9 @@ function updateDisplay (mon)
         mon.write(msg)
         mon.setBackgroundColor(colors.lightGray)
         for i, workOrder in ipairs(workOrders) do
-            mon.setCursorPos(1, 4 + i - lineOffset)
+            mon.setCursorPos(1, 3 + i - lineOffset)
             mon.write(string.rep(" ", width))
-            mon.setCursorPos(1, 4 + i - lineOffset)
+            mon.setCursorPos(1, 3 + i - lineOffset)
             local c = colors.green
             if workOrder.claimed == false then
                 c = colors.red
@@ -572,7 +572,7 @@ function updateDisplay (mon)
             end
             mon.write(iStr .. string.rep(" ", 4 - #iStr) .. type .. " " .. workOrder.buildingName)
             local msg = workOrder.workOrderType .. "->" .. workOrder.targetLevel .. " | " .. workOrder.priority
-            mon.setCursorPos(width - #msg, 4 + i - lineOffset)
+            mon.setCursorPos(width - #msg, 3 + i - lineOffset)
             mon.write(msg)
         end
     elseif currentTab == 2 then
@@ -1011,28 +1011,40 @@ function getInputs(skip)
                         fingerprint=itemRequest.fingerprint,
                         needed=itemRequest.count * request.count
                     }
-                    local existingItem = bridge.getItem({fingerprint=item.fingerprint})
-                    local status = "m"
-                    if existingItem ~= nil and existingItem.fingerprint ~= nil then
-                        if item.needed > existingItem.amount then
-                            if bridge.isItemCrafting({fingerprint=item.fingerprint}) then
-                                status = "c"
+                    if mode ~= "DP" then
+                        local existingItem = bridge.getItem({fingerprint=item.fingerprint})
+                        local status = "m"
+                        if existingItem ~= nil and existingItem.fingerprint ~= nil then
+                            if item.needed > existingItem.amount then
+                                if bridge.isItemCrafting({fingerprint=item.fingerprint}) then
+                                    status = "c"
+                                end
+                            else
+                                status = "a"
+                            end
+                            item.status = status
+                            item.available = existingItem.amount
+                            item.missing = item.needed - existingItem.amount
+                            if item.missing < 0 then
+                                item.missing = 0
                             end
                         else
-                            status = "a"
+                            item.status = status
+                            item.available = 0
+                            item.missing = item.needed
                         end
-                        item.status = status
-                        item.available = existingItem.amount
-                        item.missing = item.needed - existingItem.amount
-                        if item.missing < 0 then
-                            item.missing = 0
-                        end
+                        table.insert(allRequests, item)
                     else
-                        item.status = status
-                        item.available = 0
-                        item.missing = item.needed
+                        local item = {
+                            name=itemRequest.displayName,
+                            fingerprint=itemRequest.fingerprint,
+                            needed=itemRequest.count * request.count,
+                            status="m",
+                            available=0,
+                            missing=itemRequest.count * request.count
+                        }
+                        table.insert(allRequests, item)
                     end
-                    table.insert(allRequests, item)
                 end
             end
         end
@@ -1043,12 +1055,14 @@ function moveItems()
     local startTime = os.epoch()
     if mode == "ME" or mode == "RS" or mode == "NI" then
         local empty = true
-        if peripheral.call(outputInventory, "list") == nil then
-            logging:ERROR("Output Inventory not found")
-            return false
-        end
-        if next(peripheral.call(outputInventory, "list")) ~= nil then
-            empty = false
+        if mode ~= "NI" then
+            if peripheral.call(outputInventory, "list") == nil then
+                logging:ERROR("Output Inventory not found")
+                return false
+            end
+            if next(peripheral.call(outputInventory, "list")) ~= nil then
+                empty = false
+            end
         end
         for _, item in ipairs(allRequests) do
             if item.status == "a" then
