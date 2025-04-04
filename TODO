@@ -1,0 +1,40 @@
+startup:
+    ToDo Generally:
+        ☐ Test headless fix
+        ☐ Optimize the request getting
+        ☐ Check food and fuel requests
+
+    ToDo 0.3.0:
+        ✔ Add scrolling @done(24-08-25 19:58)
+        ✔ Add stats tab @done(24-08-25 19:58)
+        ☐ Add loggin ability to channge current log to log_n.log and create a new log file if full
+        ☐ Add color to the log terminal outout ?
+        ✔ Add a settings file @done(24-08-25 19:58)
+        ☐ Add a settings tab
+        ☐ Add a whitelist for tools, weapons, and armor
+        ☐ Add a blacklist for items
+
+
+    ToDo Future:
+        ☐ Add WIFI
+
+    Fixes:
+        ✔ Fix buggy item count, only item count of 1 @done(24-08-21 21:57)
+        ✔ Fix large number in display @done(24-08-21 22:40)
+        ✔ Fix DP mode @done(24-08-22 00:51)
+        ✔ Fix the touch event @done(24-08-22 00:51)
+        ☐ Fix crash when while running adding a builder ?
+        ☐ Fix wrong work order displayed when changing the number of builders ?
+        ☐ Fix DP mode, crash on startup
+
+
+installer:
+    ToDo:
+        ☐ Update the installer only when supplied with a -u or --update flag
+        ☐ Make function for each step
+        ☐ Only ask to overwrite configs when it exists and updating
+        ☐ If installing check if any of the config files already exists and ask to overwrite
+        ☐ If all files are already installed, ask if the user wants to update
+
+    Fixes:
+        ☐ Fix unistall when invalid input when updating
