@@ -30,39 +30,39 @@ function validateConfig (config)
 end
 
 function validateBuilderRequest(request)
-    if not request then
+    if request == nil then
         logging:ERROR("builderRequest is nil")
         return false
     end
-    if not request.item then
+    if request.item == nil then
         logging:ERROR("builderRequest.item is nil")
         return false
     end
-    if not request.needed and type(request.needed) ~= "number" then
-        logging:ERROR("builderRequest.needed is nil or not a number")
-        return false
+    if request.needed == nil and type(request.needed) ~= "number" then
+        logging:DEBUG("builderRequest.needed is nil or not a number")
+        request.needed = 0
     end
-    if not request.available and type(request.available) ~= "number" then
-        logging:ERROR("builderRequest.available is nil or not a number")
-        return false
+    if request.available == nil and type(request.available) ~= "boolean" then
+        logging:DEBUG("builderRequest.available is nil or not a boolean")
+        request.available = false
     end
-    if not request.delivering and type(request.delivering) ~= "number" then
-        logging:ERROR("builderRequest.delivering is nil or not a number")
-        return false
+    if request.delivering == nil and type(request.delivering) ~= "boolean" then
+        logging:DEBUG("builderRequest.delivering is nil or not a boolean")
+        request.delivering = false
     end
     return true
 end
 
 function validateBuilder(builder)
-    if not builder then
+    if builder == nil then
         logging:ERROR("builder is nil")
         return false
     end
-    if not builder.id then
+    if builder.id == nil then
         logging:ERROR("builder.id is nil")
         return false
     end
-    if not builder.pos then
+    if builder.pos == nil then
         logging:ERROR("builder.pos is nil")
         return false
     end
