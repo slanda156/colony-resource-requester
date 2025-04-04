@@ -73,6 +73,7 @@ function createConfig ()
     config.version = VERSION
     config.updateInterval = 15
     config.forceHeadless = false
+    config.testPerformance = false
     config.lastTab = 0
     config.logging = {}
     config.logging.logFile = "config.log"
@@ -540,8 +541,9 @@ function updateDisplay (mon)
         mon.write(" Requested")
         mon.setTextColor(colors.red)
         mon.write(" Missing")
-        mon.setTextColor(colors.blue)
-        mon.write(" Blacklisted")
+        -- ToDo: Uncoment when blacklists are implemented
+        -- mon.setTextColor(colors.blue)
+        -- mon.write(" Blacklisted")
     elseif currentTab == 1 then
         -- Work Orders
         -- Text color Green: claimed, red: not claimed
@@ -557,24 +559,39 @@ function updateDisplay (mon)
         mon.write(msg)
         mon.setBackgroundColor(colors.lightGray)
         for i, workOrder in ipairs(workOrders) do
-            mon.setCursorPos(1, 3 + i - lineOffset)
-            mon.write(string.rep(" ", width))
-            mon.setCursorPos(1, 3 + i - lineOffset)
-            local c = colors.green
-            if workOrder.claimed == false then
-                c = colors.red
+            local line = 4 + i - 1 - lineOffset
+            if i - lineOffset > height - 3 then
+                break
             end
-            mon.setTextColor(c)
-            local iStr = tostring(i)
-            local type = ""
-            if workOrder.type == "WorkOrderBuilding" then
-                type = "Builder"
+            if i - lineOffset >= 1 then
+                mon.setCursorPos(1, line)
+                mon.write(string.rep(" ", width))
+                mon.setCursorPos(1, line)
+                local c = colors.black
+                if workOrder.claimed == false then
+                    c = colors.red
+                end
+                mon.setTextColor(c)
+                local iStr = tostring(i)
+                local type = ""
+                if workOrder.type == "WorkOrderBuilding" then
+                    type = "Builder"
+                end
+                mon.write(iStr .. string.rep(" ", 4 - #iStr) .. type .. " " .. workOrder.buildingName)
+                local msg = ""
+                if workOrder.workOrderType == "UPGRADE" then
+                    msg = workOrder.workOrderType .. "->" .. workOrder.targetLevel .. " | " .. workOrder.priority
+                else
+                    msg = workOrder.workOrderType .. " | " .. workOrder.priority
+                end
+                mon.setCursorPos(width - #msg, line)
+                mon.write(msg)
             end
-            mon.write(iStr .. string.rep(" ", 4 - #iStr) .. type .. " " .. workOrder.buildingName)
-            local msg = workOrder.workOrderType .. "->" .. workOrder.targetLevel .. " | " .. workOrder.priority
-            mon.setCursorPos(width - #msg, 3 + i - lineOffset)
-            mon.write(msg)
         end
+        mon.setBackgroundColor(colors.black)
+        mon.setTextColor(colors.red)
+        mon.setCursorPos(1, height)
+        mon.write("Not Claimed")
     elseif currentTab == 2 then
         -- Citizens
         mon.setBackgroundColor(colors.gray)
@@ -1234,7 +1251,6 @@ if logMode == "overwrite" then
     file.close()
 end
 -- Performace tests
-testPerformance = true
 timesMoveItems = {}
 timesGetInputs = {}
 timesUpdateDisplay = {}
@@ -1264,7 +1280,7 @@ else
     timerIntervall = os.startTimer(config.updateInterval)
     mainLoop()
     -- Performance testing
-    if testPerformance then
+    if config.testPerformance then
         local timeMoveItems = 0
         local timeGetInputs = 0
         local timeUpdateDisplay = 0
