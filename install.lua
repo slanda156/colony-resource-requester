@@ -113,6 +113,7 @@ elseif branchInput == "2" then -- dev
     codes["src/widgets.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/dev/src/widgets.lua"}
     codes["src/logging.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/dev/src/logging.lua"}
     codes["src/function.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/dev/src/function.lua"}
+    codes["src/validation.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/dev/src/validation.lua"}
 else -- invalid
     print("Invalid branch")
     return
