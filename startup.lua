@@ -1000,7 +1000,7 @@ function getInputs(skip)
             requestTarget = requestTarget:sub(2)
             for _, citizen in ipairs(citizens) do
                 if citizen.name == requestTarget then
-                    if config.allowedRequests.builder then
+                    if config.allowedRequests.builder then -- ToDo: Add more filter options
                         if citizen.work.type == "builder" then
                             allowed = true
                         end
@@ -1015,9 +1015,9 @@ function getInputs(skip)
         if allowed then
             for _, itemRequest in ipairs(request.items) do
                 local skipped = false
-                for _, existingItem in ipairs(allRequests) do
-                    if existingItem.fingerprint == itemRequest.fingerprint then
-                        existingItem.needed = existingItem.needed + itemRequest.count
+                for _, allRequest in ipairs(allRequests) do
+                    if allRequest.fingerprint == itemRequest.fingerprint then
+                        allRequest.needed = allRequest.needed + itemRequest.count
                         skipped = true
                         break
                     end
