@@ -542,6 +542,39 @@ function updateDisplay (mon)
         mon.write(" Missing")
         mon.setTextColor(colors.blue)
         mon.write(" Blacklisted")
+    elseif currentTab == 1 then
+        -- Work Orders
+        -- Text color Green: claimed, red: not claimed
+        -- no | Type | Building | workOrderType -> level | P
+        mon.setBackgroundColor(colors.gray)
+        mon.setTextColor(colors.black)
+        mon.setCursorPos(1, 3)
+        mon.write(string.rep(" ", width))
+        mon.setCursorPos(1, 3)
+        mon.write("No | Type" .. string.rep(" ", 2) .. "| Building") -- replace no " " with longest type - 5
+        local msg = "Work Order | P"
+        mon.setCursorPos(width - #msg, 3)
+        mon.write(msg)
+        mon.setBackgroundColor(colors.lightGray)
+        for i, workOrder in ipairs(workOrders) do
+            mon.setCursorPos(1, 4 + i - lineOffset)
+            mon.write(string.rep(" ", width))
+            mon.setCursorPos(1, 4 + i - lineOffset)
+            local c = colors.green
+            if workOrder.claimed == false then
+                c = colors.red
+            end
+            mon.setTextColor(c)
+            local iStr = tostring(i)
+            local type = ""
+            if workOrder.type == "WorkOrderBuilding" then
+                type = "Builder"
+            end
+            mon.write(iStr .. string.rep(" ", 4 - #iStr) .. type .. " " .. workOrder.buildingName)
+            local msg = workOrder.workOrderType .. "->" .. workOrder.targetLevel .. " | " .. workOrder.priority
+            mon.setCursorPos(width - #msg, 4 + i - lineOffset)
+            mon.write(msg)
+        end
     elseif currentTab == 2 then
         -- Citizens
         mon.setBackgroundColor(colors.gray)
@@ -639,21 +672,23 @@ function updateDisplay (mon)
         end
     elseif currentTab == 4 then
         -- Buildings
+        mon.setBackgroundColor(colors.gray)
+        mon.setTextColor(colors.black)
+        mon.setCursorPos(1, 3)
+        mon.write(string.rep(" ", width))
+        mon.setCursorPos(1, 3)
+        -- no | style | type | (level|maxLevel) | priority
+        mon.write("No | Style" .. string.rep(" ", #buildings[1].style - 6) .. "| Type")
+        local msg = "(Level|MaxLevel) | P"
+        mon.setCursorPos(width - #msg, 3)
+        mon.write(msg)
+        mon.setBackgroundColor(colors.lightGray)
         for i, building in ipairs(buildings) do
-            mon.setBackgroundColor(colors.lightGray)
             mon.setTextColor(colors.black)
             local line = 4 + i - 1 - lineOffset
             if i - lineOffset > height - 3 then
                 break
             end
-            mon.setCursorPos(1, 3)
-            mon.write(string.rep(" ", width))
-            mon.setCursorPos(1, 3)
-            -- no | style | type | (level|maxLevel) | priority
-            mon.write("No | Style" .. string.rep(" ", #building.style - 6) .. "| Type")
-            local msg = "(Level|MaxLevel) | P"
-            mon.setCursorPos(width - #msg, 3)
-            mon.write(msg)
             if i - lineOffset >= 1 then
                 -- textcolor: green: ok, yellow: upgrading, orange: not guarded, red: not built
                 -- style .. " " .. type .. " (" .. level .. "|" .. maxLevel .. ") P: " .. priority
@@ -674,18 +709,18 @@ function updateDisplay (mon)
                 local msg = "(" .. building.level .. "|" .. building.maxLevel .. ") | " .. building.priority
                 mon.setCursorPos(width - #msg, line)
                 mon.write(msg)
-                mon.setBackgroundColor(colors.black)
-                mon.setCursorPos(1, height)
-                mon.setTextColor(colors.green)
-                mon.write("OK")
-                mon.setTextColor(colors.yellow)
-                mon.write(" Upgrading")
-                mon.setTextColor(colors.orange)
-                mon.write(" Not Guarded")
-                mon.setTextColor(colors.red)
-                mon.write(" Not Built")
             end
         end
+        mon.setBackgroundColor(colors.black)
+        mon.setCursorPos(1, height)
+        mon.setTextColor(colors.green)
+        mon.write("OK")
+        mon.setTextColor(colors.yellow)
+        mon.write(" Upgrading")
+        mon.setTextColor(colors.orange)
+        mon.write(" Not Guarded")
+        mon.setTextColor(colors.red)
+        mon.write(" Not Built")
     elseif currentTab == 5 then
         -- Research
         mon.setBackgroundColor(colors.gray)
@@ -694,24 +729,26 @@ function updateDisplay (mon)
         mon.write(string.rep(" ", width))
         mon.setCursorPos(1, 3)
         mon.write("Finished Research:")
-        mon.setBackgroundColor(colors.black)
-        mon.setTextColor(colors.white)
+        mon.setBackgroundColor(colors.lightGray)
+        mon.setTextColor(colors.black)
         mon.setCursorPos(2, 4)
         for i, res in ipairs(completedResearch) do
             if i - lineOffset > height - 5 then
                 break
             end
             if i - lineOffset >= 1 then
+                mon.setCursorPos(1, 3 + i - lineOffset)
+                mon.write(string.rep(" ", width))
+                mon.setCursorPos(2, 3 + i - lineOffset)
                 mon.write(res.name)
-                mon.setCursorPos(2, 4 + i - lineOffset)
             end
         end
         mon.setBackgroundColor(colors.gray)
         mon.setTextColor(colors.black)
         mon.setCursorPos(width / 2, 3)
         mon.write("Current Research:")
-        mon.setBackgroundColor(colors.black)
-        mon.setTextColor(colors.white)
+        mon.setBackgroundColor(colors.lightGray)
+        mon.setTextColor(colors.black)
         mon.setCursorPos(width / 2, 4)
         for i, res in ipairs(currentResearch) do
             if i - lineOffset > height - 4 then
@@ -724,8 +761,12 @@ function updateDisplay (mon)
         end
     elseif currentTab == 6 then
         -- Stats
-        mon.setBackgroundColor(colors.black)
-        mon.setTextColor(colors.white)
+        mon.setBackgroundColor(colors.lightGray)
+        mon.setTextColor(colors.black)
+        for i = 1, 10 do
+            mon.setCursorPos(1, i + 3)
+            mon.write(string.rep(" ", width))
+        end
         mon.setCursorPos(2, 4)
         mon.write("Colony: " .. colonyName)
         mon.setCursorPos(2, 5)
@@ -750,7 +791,7 @@ function updateDisplay (mon)
             attackText = "No"
         end
         mon.write("Under Attack: " .. attackText)
-        mon.setBackgroundColor(colors.black)
+        mon.setBackgroundColor(colors.lightGray)
         mon.setCursorPos(2, 12)
         mon.write("Graves: " .. graves)
         mon.setCursorPos(2, 13)
@@ -839,6 +880,7 @@ function getInputs(skip)
     end
     buildingsCount = #colony.getBuildings()
     buildings = colony.getBuildings()
+    workOrders = colony.getWorkOrders()
     maxCitizens = colony.maxOfCitizens()
     happiness = colony.getHappiness()
     underAttack = colony.isUnderAttack()
