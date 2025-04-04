@@ -747,15 +747,12 @@ function updateDisplay (mon)
         mon.setTextColor(colors.black)
         mon.setCursorPos(width / 2, 3)
         mon.write("Current Research:")
-<<<<<<< HEAD
         mon.setBackgroundColor(colors.lightGray)
         mon.setTextColor(colors.black)
         mon.setCursorPos(width / 2, 4)
-=======
         mon.setBackgroundColor(colors.black)
         mon.setTextColor(colors.white)
         mon.setCursorPos(1, 4)
->>>>>>> fcd5aba897ea52266be46f4afbc7e9c55dc69f5b
         for i, res in ipairs(currentResearch) do
             if i - lineOffset > height - 4 then
                 break
