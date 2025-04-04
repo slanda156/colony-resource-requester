@@ -9,7 +9,7 @@ function copy(obj, seen)
     s[obj] = res
     for k, v in pairs(obj) do res[copy(k, s)] = copy(v, s) end
     return res
-  end
+end
 
 
 local Logger = {}
@@ -24,13 +24,12 @@ function Logger.new()
     self.logTimeFormat = true
     self.allowedLevels = copy(allLevels)
     self.firstMsg = true
-    self.colorLevels = {DEBUG=colors.lightBlue, INFO=colors.lime, WARNING=colors.yellow, ERROR=colors.red}
     return self
 end
 
 function Logger:setLogConfig(t)
     if type(t) ~= "table" then
-        print("Invalid log config, " .. type(t))
+        self:ERROR("Invalid log config, " .. type(t))
         return
     end
     self:setLogFile(t.logFile)
@@ -45,14 +44,14 @@ function Logger:setLogLevel(level)
         self:ERROR("Invalid log level type, " .. type(level))
         return
     end
-    self:INFO(textutils.serializeJSON(allLevels))
     if allLevels[level] == nil then
         self:ERROR("Invalid log level, " .. level)
         return
     end
     self.logLevel = level
-    self.allowedLevels = copy(allLevels)
-    if self.logLevel == "INFO" then
+    if self.logLevel == "DEBUG" then
+        self.allowedLevels = copy(allLevels)
+    elseif self.logLevel == "INFO" then
         self.allowedLevels["DEBUG"] = nil
     elseif self.logLevel == "WARNING" then
         self.allowedLevels["DEBUG"] = nil
@@ -66,7 +65,7 @@ end
 
 function Logger:setLogTimeSource(source)
     if type(source) ~= "string" then
-        print("Invalid log time source, " .. type(source))
+        self:ERROR("Invalid log time source, " .. type(source))
         return
     end
     self.logTimeSource = source
@@ -74,7 +73,7 @@ end
 
 function Logger:setLogTimeFormat(format)
     if type(format) ~= "boolean" then
-        print("Invalid log time format, " .. type(format))
+        self:ERROR("Invalid log time format, " .. type(format))
         return
     end
     self.logTimeFormat = format
@@ -82,7 +81,7 @@ end
 
 function Logger:setLogFile(file)
     if type(file) ~= "string" then
-        print("Invalid log file, " .. type(file))
+        self:ERROR("Invalid log file, " .. type(file))
         return
     end
     self.logFile = file
@@ -90,7 +89,7 @@ end
 
 function Logger:setLogMode(mode)
     if type(mode) ~= "string" then
-        print("Invalid log mode, " .. type(mode))
+        self:ERROR("Invalid log mode, " .. type(mode))
         return
     end
     self.logMode = mode
@@ -104,19 +103,16 @@ function Logger:log(level, msg)
         self.firstMsg = false
     end
     if type(level) ~= "string" then
-        print("Invalid log level, " .. tostring(level))
+        self:WARNING("Invalid log level, " .. tostring(level))
         return
     end
     if type(msg) ~= "string" then
-        print("Invalid log message, " .. type(msg))
+        self:WARNING("Invalid log message, " .. type(msg))
         return
     end
     if self.allowedLevels[level] ~= nil then
-        local lastColor = term.getTextColor()
-        term.setTextColor(self.colorLevels[level])
         local finalMsg = textutils.formatTime(os.time(self.logTimeSource), self.logTimeFormat) .. " - " .. level .. " - " ..  msg
         print(finalMsg)
-        term.setTextColor(lastColor)
         local file = fs.open(self.logFile, "a")
         if type(file) == "string" then
             print("Couldn't open log file")
