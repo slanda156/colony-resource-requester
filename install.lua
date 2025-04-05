@@ -57,6 +57,7 @@ end
 term.clear()
 term.setCursorPos(1, 1)
 
+-- Installer update
 if not skipInstallerUpdate then
     if not skipQuestions then
         print("Do you want to update the installer? (y/n)")
@@ -90,6 +91,7 @@ if not skipInstallerUpdate then
     end
 end
 
+-- Versions
 if not skipQuestions then
     print("Which branch would you like to install?\n[1]: main (default)\n[2]: dev")
     io.input(io.stdin)
