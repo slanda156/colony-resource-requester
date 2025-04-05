@@ -1095,7 +1095,7 @@ function moveItems()
                 Logging:ERROR("Output Inventory not found")
                 return false
             end
-            if checkEmptyTable(peripheral.call(outputInventory, "list")) then
+            if not checkEmptyTable(peripheral.call(outputInventory, "list")) then
                 empty = false
             end
         end
