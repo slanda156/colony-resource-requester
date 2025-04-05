@@ -29,6 +29,21 @@ function strFuncs.compInt(number)
     return output
 end
 
+function checkEmptyTable(t)
+    if type(t) ~= "table" then
+        logging:ERROR("Invalid table")
+        logging:DEBUG("Table: " .. textutils.serialize(t))
+        return false
+    end
+    for _, v in pairs(t) do
+        if v ~= nil then
+            return false
+        end
+    end
+    return true
+end
+
 return {
-    strFuncs = strFuncs
+    strFuncs = strFuncs,
+    checkEmptyTable = checkEmptyTable,
 }

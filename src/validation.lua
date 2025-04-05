@@ -1,4 +1,5 @@
 logging = require("src/logging")
+functions = require("src/function")
 
 function validateConfig (config)
     if config == nil then -- Invalid config
@@ -30,7 +31,7 @@ function validateConfig (config)
 end
 
 function validateBuilderRequest(request)
-    if request == nil then
+    if request == nil or checkEmptyTable(request) then
         logging:ERROR("builderRequest is nil")
         return false
     end
@@ -59,7 +60,7 @@ function validateBuilderRequest(request)
 end
 
 function validateBuilder(builder)
-    if builder == nil then
+    if builder == nil or checkEmptyTable(builder) then
         logging:ERROR("builder is nil")
         return false
     end
@@ -75,7 +76,7 @@ function validateBuilder(builder)
 end
 
 function validateBridgeItem(item)
-    if item == nil or #item == 0 then
+    if item == nil or checkEmptyTable(item) then
         return false
     end
     if item.name == nil then
@@ -115,7 +116,7 @@ function validateBridgeItem(item)
 end
 
 function validateRequestItem(item)
-    if item == nil or #item == 0 then
+    if item == nil or checkEmptyTable(item) then
         logging:ERROR("requestItem is nil")
         return false
     end
@@ -142,3 +143,11 @@ function validateRequestItem(item)
     end
     return true
 end
+
+return {
+    validateConfig = validateConfig,
+    validateBuilderRequest = validateBuilderRequest,
+    validateBuilder = validateBuilder,
+    validateBridgeItem = validateBridgeItem,
+    validateRequestItem = validateRequestItem
+}
