@@ -105,8 +105,13 @@ function validateBridgeItem(item)
         item.isCraftable = false
     end
     if item.nbt == nil then
-        logging:DEBUG("bridgeItem.nbt is nil")
-        item.nbt = ""
+        -- Check if item.components if available (1.21.1+)
+        if item.components ~= nil then
+            item.nbt = item.components
+        else
+            logging:DEBUG("bridgeItem.nbt is nil")
+            item.nbt = ""
+        end
     end
     if item.tags == nil then
         logging:DEBUG("bridgeItem.tags is nil")
