@@ -34,9 +34,7 @@ For more information visit the [Wiki](https://github.com/slanda156/colony-resour
 
 ## ToDo
 
-* Fix bugs
-* More Tabs - Add more tabs with all the stats of your colonie
-* WiFi - Add support for the Pocket Computer too see live stats, everywhere
+See [TODO](TODO)
 
 ## Meta
 

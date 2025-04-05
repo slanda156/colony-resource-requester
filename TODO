@@ -7,13 +7,11 @@ startup:
     ToDo 0.3.0:
         ✔ Add scrolling @done(24-08-25 19:58)
         ✔ Add stats tab @done(24-08-25 19:58)
-        ☐ Add loggin ability to channge current log to log_n.log and create a new log file if full
         ☐ Add color to the log terminal outout ?
         ✔ Add a settings file @done(24-08-25 19:58)
         ☐ Add a settings tab
         ☐ Add a whitelist for tools, weapons, and armor
         ☐ Add a blacklist for items
-
 
     ToDo Future:
         ☐ Add WIFI
@@ -25,11 +23,14 @@ startup:
         ✔ Fix the touch event @done(24-08-22 00:51)
         ☐ Fix crash when while running adding a builder ?
         ☐ Fix wrong work order displayed when changing the number of builders ?
-        ☐ Fix DP mode, crash on startup
-
+        ☐ Fix crash when no builder are pressent
+        ✔ Fix DP mode, crash on startup @done(25-04-05 08:01)
+        ☐ Fix the crash when switch builders in request tab
+        ☐ Fix the weird scrolling at request tab
 
 installer:
     ToDo:
+        ☐ Make for installer updates a seperate branch
         ☐ Update the installer only when supplied with a -u or --update flag
         ☐ Make function for each step
         ☐ Only ask to overwrite configs when it exists and updating
