@@ -42,10 +42,10 @@ function validateBuilderRequest(request)
     if request.needed == nil then
         -- Check if item.needs if available (1.21.1+)
         if request.needs ~= nil then
-            request.amount = request.needs
+            request.needed = request.needs
         else
             logging:DEBUG("builderRequest.needed is nil")
-            request.needs = 0
+            request.needed = 0
         end
     end
     if request.available == nil then
