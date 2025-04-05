@@ -1,7 +1,8 @@
-logging = require("src/logging")
-validating = require("src/validation")
+Logging = require("src/logging")
+Validating = require("src/validation")
 Button = require("src/widgets").Button
 Group = require("src/widgets").Group
+Functions = require("src/function")
 
 function insertAt (str, char, i)
     return str:sub(1, i) .. char .. str:sub(i + 1)
@@ -94,9 +95,9 @@ end
 function loadConfig ()
     local config = {}
     local newConfig = createConfig()
-    logging:setLogConfig(newConfig.logging)
+    Logging:setLogConfig(newConfig.logging)
     if not fs.exists("config.json") then
-        logging:INFO("No config file found, creating default config")
+        Logging:INFO("No config file found, creating default config")
         config = newConfig
         saveConfig(config)
     else
@@ -106,8 +107,8 @@ function loadConfig ()
             file.close()
             local status, err = pcall(function () config = textutils.unserializeJSON(data) end)
             if not status then
-                logging:ERROR("Couldn't parse config file, using default config")
-                logging:DEBUG("Error: " .. err)
+                Logging:ERROR("Couldn't parse config file, using default config")
+                Logging:DEBUG("Error: " .. err)
                 shell.run("rename", "config.json", "config.json.bak")
                 config = newConfig
                 config.logging.logLevel = "DEBUG"
@@ -116,17 +117,17 @@ function loadConfig ()
                 local validResult = validateConfig(config)
                 -- 1: Valid, 0: Outdated, -1: Invalid
                 if validResult == 1 then
-                    logging:setLogConfig(config.logging)
-                    logging:INFO("Config loaded")
+                    Logging:setLogConfig(config.logging)
+                    Logging:INFO("Config loaded")
                 elseif validResult == 0 then
-                    logging:WARNING("Config is outdated, updating")
-                    logging:DEBUG("Old config version: " .. config.version)
+                    Logging:WARNING("Config is outdated, updating")
+                    Logging:DEBUG("Old config version: " .. config.version)
                     shell.run("rename", "config.json", "config.json.bak")
                     local refConfig = createConfig()
                     for key, value in pairs(config) do
                         -- Insert here when config keys are renamed
                         if refConfig[key] == nil then
-                            logging:WARNING("Removing outdated config key: " .. key)
+                            Logging:WARNING("Removing outdated config key: " .. key)
                         elseif key ~= "version" then
                             if type(value) == "table" then
                                 refConfig[key] = mergeTable(refConfig[key], value)
@@ -138,14 +139,14 @@ function loadConfig ()
                     config = refConfig
                     saveConfig(config)
                 elseif validResult == -1 then
-                    logging:ERROR("Invalid config, using default config")
+                    Logging:ERROR("Invalid config, using default config")
                     shell.run("rename", "config.json", "config.json.bak")
                     config = newConfig
                     saveConfig(config)
                 end
             end
         else
-            logging:ERROR("Couldn't open config file, using default config")
+            Logging:ERROR("Couldn't open config file, using default config")
             shell.run("rename", "config.json", "config.json.bak")
             config = newConfig
             saveConfig(config)
@@ -164,15 +165,15 @@ function saveConfig (config)
         config.lastTab = currentTab
         file.write(prettyJSON(textutils.serializeJSON(config)))
     else
-        logging:ERROR("Invalid config, saving default config")
-        logging:DEBUG("Config status: " .. validConfig)
+        Logging:ERROR("Invalid config, saving default config")
+        Logging:DEBUG("Config status: " .. validConfig)
         file.write(prettyJSON(textutils.serializeJSON(createConfig())))
     end
 end
 
 function checkIfDirect (per)
     if per == nil then
-        logging:ERROR("Peripheral not found")
+        Logging:ERROR("Peripheral not found")
         return false
     end
     if type(per) == "string" then
@@ -192,8 +193,8 @@ function getPeripherals ()
         monitor = peripheral.find("monitor")
         displayMode = true
         if not monitor then
-            logging:WARNING("Couldn't connect to monitor")
-            logging:INFO("Running in headless mode")
+            Logging:WARNING("Couldn't connect to monitor")
+            Logging:INFO("Running in headless mode")
             displayMode = false
         else
             monitor.setBackgroundColor(colors.black)
@@ -202,34 +203,34 @@ function getPeripherals ()
 
             monitor.setTextScale(0.5)
             local width, height = monitor.getSize()
-            logging:DEBUG("Monitor size: " .. width .. "x" .. height)
+            Logging:DEBUG("Monitor size: " .. width .. "x" .. height)
             if width < 57 or height < 24 then
                 monitor.setCursorPos(1, 1)
                 monitor.write("Monitor too small")
                 monitor.setCursorPos(1, 2)
                 monitor.write("At least 3x2 required")
-                logging:WARNING("Monitor too small, at least 3x2 required")
-                logging:INFO("Running in headless mode")
+                Logging:WARNING("Monitor too small, at least 3x2 required")
+                Logging:INFO("Running in headless mode")
                 displayMode = false
             else
                 if not monitor.isColor() then
                     displayMode = false
-                    logging:WARNING("Monitor must be an Advanced Monitorn, running in headless mode")
+                    Logging:WARNING("Monitor must be an Advanced Monitorn, running in headless mode")
                 end
             end
         end
     else
         displayMode = false
-        logging:INFO("Running in headless mode (forced)")
+        Logging:INFO("Running in headless mode (forced)")
     end
     local meBridge = peripheral.find("meBridge")
     if meBridge then
         bridge = meBridge
         mode = "ME"
         if not bridge.getEnergyUsage() then
-            logging:ERROR("ME Bridge not connected or ME system not working")
+            Logging:ERROR("ME Bridge not connected or ME system not working")
         else
-            logging:INFO("ME Bridge connected")
+            Logging:INFO("ME Bridge connected")
         end
     end
     if not mode then
@@ -238,32 +239,32 @@ function getPeripherals ()
             bridge = rsBridge
             mode = "RS"
             if not bridge.getEnergyUsage() then
-                logging:ERROR("RS Bridge not connected or RS system not working")
+                Logging:ERROR("RS Bridge not connected or RS system not working")
             else
-                logging:INFO("RS Bridge connected")
+                Logging:INFO("RS Bridge connected")
             end
         end
     end
     if not mode then
-        logging:WARNING("No ME/RS bridge found")
+        Logging:WARNING("No ME/RS bridge found")
         if not displayMode then
-            logging:ERROR("Running in headless mode, stopping")
+            Logging:ERROR("Running in headless mode, stopping")
             startupSuccess = false
             return
         end
-        logging:INFO("Running in display only mode")
+        Logging:INFO("Running in display only mode")
         mode = "DP"
     end
     colony = peripheral.find("colonyIntegrator")
     if not colony then
         startupSuccess = false
-        logging:ERROR("Colony Integrator not found")
+        Logging:ERROR("Colony Integrator not found")
     else
         if not colony.isInColony() then
             startupSuccess = false
-            logging:ERROR("Colony Integrator not inside a colony")
+            Logging:ERROR("Colony Integrator not inside a colony")
         else
-            logging:INFO("Colony Integrator connected")
+            Logging:INFO("Colony Integrator connected")
         end
     end
     if config.wifi.wifiEnable then
@@ -281,13 +282,13 @@ function getPeripherals ()
             end
         end
         if wifi == nil then
-            logging:WARNING("Wirless modem not found")
+            Logging:WARNING("Wirless modem not found")
         else
             wifi.open(config.wifi.sendChannel)
-            logging:INFO("WIFI enabled")
+            Logging:INFO("WIFI enabled")
         end
     else
-        logging:INFO("WIFI disabled")
+        Logging:INFO("WIFI disabled")
     end
 
     if mode ~= "DP" then
@@ -298,8 +299,8 @@ function getPeripherals ()
                 if method == "pushItems" then
                     found = true
                     outputInventory = p
-                    logging:INFO("Output inventory found")
-                    logging:DEBUG("Output inventory: " .. p)
+                    Logging:INFO("Output inventory found")
+                    Logging:DEBUG("Output inventory: " .. p)
                     goto outputFound
                 end
             end
@@ -307,11 +308,11 @@ function getPeripherals ()
         ::outputFound::
         if not found then
             mode = "NI"
-            logging:ERROR("No output inventory found")
+            Logging:ERROR("No output inventory found")
         else
             local bridgeConnectionType = checkIfDirect(bridge)
             if not checkIfDirect(outputInventory) == bridgeConnectionType then
-                logging:ERROR("Output inventory not connected to the same network as the ME/RS bridge")
+                Logging:ERROR("Output inventory not connected to the same network as the ME/RS bridge")
                 mode = "NI"
             end
         end
@@ -319,7 +320,7 @@ function getPeripherals ()
 end
 
 function callbackRefresh ()
-    logging:DEBUG("Refresh callback")
+    Logging:DEBUG("Refresh callback")
     getInputs(false)
     local success = true
     if widgets.autoButton.active then
@@ -335,7 +336,7 @@ function callbackRefresh ()
 end
 
 function callbackScroll (direction)
-    logging:DEBUG("Scroll callback")
+    Logging:DEBUG("Scroll callback")
     if direction then
         lineOffset = lineOffset + 1
     else
@@ -348,7 +349,7 @@ end
 
 function callbackTab (tab)
     local maxTabs = 7
-    logging:DEBUG("Tab callback")
+    Logging:DEBUG("Tab callback")
     if tab then
         currentTab = currentTab - 1
     else
@@ -361,7 +362,7 @@ function callbackTab (tab)
     end
     config.lastTab = currentTab
     saveConfig(config)
-    logging:DEBUG("New tab: " .. currentTab)
+    Logging:DEBUG("New tab: " .. currentTab)
     lineOffset = 0
 end
 
@@ -407,46 +408,46 @@ function setUpDisplay(mon)
     widgets = {}
     widgets.autoButton = Button.new(width - 15, 1, 6, 1, "Auto", nil, nil, true, mon)
     widgets.autoButton.active = true
-    logging:DEBUG("Added button: " .. widgets.autoButton.label)
+    Logging:DEBUG("Added button: " .. widgets.autoButton.label)
     widgets.exitButton = Button.new(width - 9, 1, 6, 1, "Exit", function () running = false end, nil, false, mon)
-    logging:DEBUG("Added button: " .. widgets.exitButton.label)
+    Logging:DEBUG("Added button: " .. widgets.exitButton.label)
     -- Scroll buttons
     widgets.scrollUpButton = Button.new(2, 2, 4, 1, "/\\", callbackScroll, true, false, mon)
     widgets.scrollUpButton.backgroundInactive = colors.gray
-    logging:DEBUG("Added button: " .. widgets.scrollUpButton.label)
+    Logging:DEBUG("Added button: " .. widgets.scrollUpButton.label)
     widgets.scrollDownButton = Button.new(7, 2, 4, 1, "\\/", callbackScroll, false, false, mon)
     widgets.scrollDownButton.backgroundInactive = colors.gray
-    logging:DEBUG("Added button: " .. widgets.scrollDownButton.label)
+    Logging:DEBUG("Added button: " .. widgets.scrollDownButton.label)
     -- Tabs
     widgets.tabLeftButton = Button.new(12, 2, 3, 1, "<", callbackTab, true, false, mon)
     widgets.tabLeftButton.backgroundInactive = colors.gray
-    logging:DEBUG("Added button: " .. widgets.tabLeftButton.label)
+    Logging:DEBUG("Added button: " .. widgets.tabLeftButton.label)
     widgets.tabRightButton = Button.new(18, 2, 3, 1, ">", callbackTab, false, false, mon)
     widgets.tabRightButton.backgroundInactive = colors.gray
-    logging:DEBUG("Added button: " .. widgets.tabRightButton.label)
+    Logging:DEBUG("Added button: " .. widgets.tabRightButton.label)
     -- Requests groups
     widgets.allGroupRequests = Group.new(4, "All", mon)
-    logging:DEBUG("Added group: " .. widgets.allGroupRequests.label)
+    Logging:DEBUG("Added group: " .. widgets.allGroupRequests.label)
     for i, builder in ipairs(builders) do
         local group = Group.new(4 + i, builder.name .. " (lvl" .. builder.lvl .. ")", mon)
         group.collapsed = true
         widgets[builder.name] = group
         tabWidgets[0][#tabWidgets[0] + 1] = builder.name
-        logging:DEBUG("Added group: " .. builder.name)
+        Logging:DEBUG("Added group: " .. builder.name)
     end
     -- Settings Buttons
     widgets.saveSettings = Button.new(width - 8, 4, 8, 3, "Save", function () saveConfig(config) end, nil, false, mon)
     widgets.saveSettings.backgroundInactive = colors.blue
-    logging:DEBUG("Added button: " .. widgets.saveSettings.label)
+    Logging:DEBUG("Added button: " .. widgets.saveSettings.label)
     widgets.filterRequests = Button.new(2, 4, 17, 1, "Filter Requests", callbackSettings, nil, true, mon)
     widgets.filterRequests.active = config.allowedRequests.enabled
-    logging:DEBUG("Added button: " .. widgets.filterRequests.label)
+    Logging:DEBUG("Added button: " .. widgets.filterRequests.label)
     widgets.filterBuilders = Button.new(2, 6, 17, 1, "Filter Builders", callbackSettings, nil, true, mon)
     widgets.filterBuilders.active = config.allowedRequests.builder
-    logging:DEBUG("Added button: " .. widgets.filterBuilders.label)
+    Logging:DEBUG("Added button: " .. widgets.filterBuilders.label)
     widgets.wifiSettings = Button.new(2, 8, 6, 1, "WIFI", callbackSettings, nil, true, mon)
     widgets.wifiSettings.active = config.wifi.wifiEnable
-    logging:DEBUG("Added button: " .. widgets.wifiSettings.label)
+    Logging:DEBUG("Added button: " .. widgets.wifiSettings.label)
 end
 
 function updateDisplay (mon)
@@ -873,7 +874,7 @@ function checkResearch(res)
             end
         end
     else
-        logging:ERROR("Research is not a table")
+        Logging:ERROR("Research is not a table")
     end
 end
 
@@ -922,7 +923,7 @@ function getInputs(skip)
     if mode == "ME" and not skip then
         local cpus = bridge.getCraftingCPUs()
         if not cpus then
-            logging:ERROR("No Crafting CPUs found, ME system not working?")
+            Logging:ERROR("No Crafting CPUs found, ME system not working?")
         else
             freeCPUs = 0
             for _, cpu in ipairs(cpus) do
@@ -938,7 +939,7 @@ function getInputs(skip)
 
     for _, builder in ipairs(builders) do
         if not validateBuilder(builder) then
-            logging:DEBUG("Invalid builder: " .. textutils.serializeJSON(builder))
+            Logging:DEBUG("Invalid builder: " .. textutils.serializeJSON(builder))
         else
             if not builderRequests[builder.id] then
                 builderRequests[builder.id] = {items={}}
@@ -950,7 +951,7 @@ function getInputs(skip)
             local builderResources = colony.getBuilderResources(builder.pos)
             for _, builderRequest in ipairs(builderResources) do
                 if not validateBuilderRequest(builderRequest) then
-                    logging:DEBUG("Invalid builder request: " .. textutils.serializeJSON(builderRequest))
+                    Logging:DEBUG("Invalid builder request: " .. textutils.serializeJSON(builderRequest))
                 else
                     local builderItem = builderRequest.item
                     builderItem.needed = builderRequest.needed
@@ -1044,7 +1045,7 @@ function getInputs(skip)
                         if mode ~= "DP" then
                             local existingItem, err = bridge.getItem({fingerprint=item.fingerprint})
                             if err ~= nil then
-                                logging:DEBUG("Couldn't get item: " .. item.name .. " (" .. item.fingerprint .. ") | Error: " .. err)
+                                Logging:DEBUG("Couldn't get item: " .. item.name .. " (" .. item.fingerprint .. ") | Error: " .. err)
                             end
                             local status = "m"
                             if validateBridgeItem(existingItem) then
@@ -1091,10 +1092,10 @@ function moveItems()
         local empty = true
         if mode ~= "NI" then
             if peripheral.call(outputInventory, "list") == nil then
-                logging:ERROR("Output Inventory not found")
+                Logging:ERROR("Output Inventory not found")
                 return false
             end
-            if next(peripheral.call(outputInventory, "list")) ~= nil then
+            if checkEmptyTable(peripheral.call(outputInventory, "list")) then
                 empty = false
             end
         end
@@ -1102,19 +1103,19 @@ function moveItems()
             if item.status == "a" then
                 if mode ~= "NI" then
                     if empty then
-                        logging:DEBUG("Exporting item: " .. item.name .. " (" .. item.fingerprint .. ")" .. " Amount: " .. item.needed)
+                        Logging:DEBUG("Exporting item: " .. item.name .. " (" .. item.fingerprint .. ")" .. " Amount: " .. item.needed)
                         _, err = bridge.exportItemToPeripheral({fingerprint=item.fingerprint, count=item.needed}, outputInventory)
                         if err ~= nil then
-                            logging:DEBUG("Couldn't export item: " .. item.name .. " (" .. item.fingerprint .. ") | Error: " .. err)
+                            Logging:DEBUG("Couldn't export item: " .. item.name .. " (" .. item.fingerprint .. ") | Error: " .. err)
                         end
                     else
-                        logging:WARNING("Ouput Inventory not empty")
+                        Logging:WARNING("Ouput Inventory not empty")
                         break
                     end
                 end
             elseif item.status == "m" then
                 if bridge.isItemCrafting({fingerprint=item.fingerprint}) then
-                    logging:DEBUG("Item is already crafting: " .. item.name .. " (" .. item.fingerprint .. ")")
+                    Logging:DEBUG("Item is already crafting: " .. item.name .. " (" .. item.fingerprint .. ")")
                 else
                     if item.missing > 0 then
                         if mode == "RS" then
@@ -1122,16 +1123,16 @@ function moveItems()
                             local status, err = pcall(function () itemName = bridge.getItem({fingerprint=item.fingerprint}).name end)
                             if status then
                                 if bridge.isItemCraftable({name=itemName}) then
-                                    logging:DEBUG("Crafting item: " .. item.name .. " (" .. item.fingerprint .. ")" .. " Amount: " .. item.missing)
+                                    Logging:DEBUG("Crafting item: " .. item.name .. " (" .. item.fingerprint .. ")" .. " Amount: " .. item.missing)
                                     _, err = bridge.craftItem({fingerprint=item.fingerprint, count=item.missing})
                                     if err ~= nil then
-                                        logging:DEBUG("Couldn't craft item: " .. item.name .. " (" .. item.fingerprint .. ") | Error: " .. err)
+                                        Logging:DEBUG("Couldn't craft item: " .. item.name .. " (" .. item.fingerprint .. ") | Error: " .. err)
                                     end
                                 else
-                                    logging:DEBUG("Item not craftable: " .. item.name .. " | " .. itemName .. " (" .. item.fingerprint .. ")")
+                                    Logging:DEBUG("Item not craftable: " .. item.name .. " | " .. itemName .. " (" .. item.fingerprint .. ")")
                                 end
                             else
-                                logging:DEBUG("Couldn't get item: " .. item.name .. " (" .. item.fingerprint .. ") | Error: " .. err)
+                                Logging:DEBUG("Couldn't get item: " .. item.name .. " (" .. item.fingerprint .. ") | Error: " .. err)
                             end
                         elseif mode == "ME" then
                             if freeCPUs > 0 then
@@ -1140,31 +1141,31 @@ function moveItems()
                                 if status then
                                     local itemName, err = bridge.getItem({fingerprint=item.fingerprint}).name
                                     if err ~= nil then
-                                        logging:DEBUG("Couldn't get item: " .. item.name .. " (" .. item.fingerprint .. ") | Error: " .. err)
+                                        Logging:DEBUG("Couldn't get item: " .. item.name .. " (" .. item.fingerprint .. ") | Error: " .. err)
                                     end
                                     if bridge.isItemCraftable({name=itemName}) then
-                                        logging:DEBUG("Crafting item: " .. item.name .. " (" .. item.fingerprint .. ")" .. " Amount: " .. item.missing)
+                                        Logging:DEBUG("Crafting item: " .. item.name .. " (" .. item.fingerprint .. ")" .. " Amount: " .. item.missing)
                                         _, err = bridge.craftItem({fingerprint=item.fingerprint, count=item.missing})
                                         if err ~= nil then
-                                            logging:DEBUG("Couldn't craft item: " .. item.name .. " (" .. item.fingerprint .. ") | Error: " .. err)
+                                            Logging:DEBUG("Couldn't craft item: " .. item.name .. " (" .. item.fingerprint .. ") | Error: " .. err)
                                         end
                                         freeCPUs = freeCPUs - 1
                                     else
                                         if itemName == nil then
-                                            logging:DEBUG("Item has no recipe: " .. item.name .. " (" .. item.fingerprint .. ")")
+                                            Logging:DEBUG("Item has no recipe: " .. item.name .. " (" .. item.fingerprint .. ")")
                                         else
-                                            logging:DEBUG("Item not craftable: " .. item.name .. " | "  .. itemName .. " (" .. item.fingerprint .. ")")
+                                            Logging:DEBUG("Item not craftable: " .. item.name .. " | "  .. itemName .. " (" .. item.fingerprint .. ")")
                                         end
                                     end
                                 else
-                                    logging:DEBUG("Couldn't get item: " .. item.name .. " (" .. item.fingerprint .. ") | Error: " .. err)
+                                    Logging:DEBUG("Couldn't get item: " .. item.name .. " (" .. item.fingerprint .. ") | Error: " .. err)
                                 end
                             else
-                                logging:DEBUG("No free Crafting CPUs available")
+                                Logging:DEBUG("No free Crafting CPUs available")
                             end
                         end
                     else
-                        logging:DEBUG("Item is available: " .. item.name .. " (" .. item.fingerprint .. "), skipping")
+                        Logging:DEBUG("Item is available: " .. item.name .. " (" .. item.fingerprint .. "), skipping")
                     end
                 end
             end
@@ -1176,11 +1177,11 @@ end
 
 function sendWifi(msg)
     if wifi.isOpen(config.wifi.sendChannel) then
-        logging:DEBUG("Sending message on channel: " .. config.wifi.sendChannel)
-        logging:DEBUG("Message: " .. msg)
+        Logging:DEBUG("Sending message on channel: " .. config.wifi.sendChannel)
+        Logging:DEBUG("Message: " .. msg)
         wifi.transmit(config.wifi.sendChannel, config.wifi.receiveChannel, msg)
     else
-        logging:ERROR("WIFI channel closed")
+        Logging:ERROR("WIFI channel closed")
     end
 end
 
@@ -1217,8 +1218,8 @@ function timerEvent()
         if mode ~= "DP" and bridge ~= nil and bridge.getEnergyUsage() then
             getInputs(false)
         elseif mode ~= "DP" then
-            logging:ERROR("ME/RS system not working")
-            logging:INFO("Retrying in 10 seconds")
+            Logging:ERROR("ME/RS system not working")
+            Logging:INFO("Retrying in 10 seconds")
             timerUpdate = os.startTimer(10)
             return
         elseif mode == "DP" then
@@ -1286,7 +1287,7 @@ timesUpdateDisplay = {}
 -- Start up
 VERSION = "0.3.0-dev"
 config = loadConfig()
-logging:INFO("Starting up, v" .. VERSION)
+Logging:INFO("Starting up, v" .. VERSION)
 running = true
 timerUpdate = 0
 timerIntervall = 0
@@ -1301,10 +1302,10 @@ if displayMode then
     setUpDisplay(monitor)
 end
 if not startupSuccess then
-    logging:ERROR("Startup failed")
+    Logging:ERROR("Startup failed")
     running = false
 else
-    logging:INFO("Startup successful")
+    Logging:INFO("Startup successful")
     timerUpdate = os.startTimer(1)
     timerIntervall = os.startTimer(config.updateInterval)
     mainLoop()
@@ -1341,12 +1342,12 @@ else
         end
         timeUpdateDisplay = timeUpdateDisplay / i
         i = 0
-        logging:INFO("moveItems took: " .. tostring(timeMoveItems) .. "ms avg")
-        logging:INFO("moveItems took: " .. tostring(maxTimeMoveItems) .. "ms max")
-        logging:INFO("getInputs took: " .. tostring(timeGetInputs) .. "ms avg")
-        logging:INFO("getInputs took: " .. tostring(maxTimeGetInputs) .. "ms max")
-        logging:INFO("updateDisplay took: " .. tostring(timeUpdateDisplay) .. "ms avg")
-        logging:INFO("updateDisplay took: " .. tostring(maxTimeUpdateDisplay) .. "ms max")
+        Logging:INFO("moveItems took: " .. tostring(timeMoveItems) .. "ms avg")
+        Logging:INFO("moveItems took: " .. tostring(maxTimeMoveItems) .. "ms max")
+        Logging:INFO("getInputs took: " .. tostring(timeGetInputs) .. "ms avg")
+        Logging:INFO("getInputs took: " .. tostring(maxTimeGetInputs) .. "ms max")
+        Logging:INFO("updateDisplay took: " .. tostring(timeUpdateDisplay) .. "ms avg")
+        Logging:INFO("updateDisplay took: " .. tostring(maxTimeUpdateDisplay) .. "ms max")
     end
 end
 
@@ -1357,4 +1358,4 @@ if displayMode then
     resetDisplay(monitor)
 end
 saveConfig(config)
-logging:INFO("Stopped")
+Logging:INFO("Stopped")

@@ -1,4 +1,4 @@
-logging = require("src/logging")
+Logging = require("src/logging")
 strFuncs = require("src/function").strFuncs
 
 local Group = {}
@@ -43,28 +43,28 @@ end
 function Group:addItem(item)
     local error = false
     if not item[1] then
-        logging:ERROR("Item name missing")
-        logging:DEBUG("Item: " .. textutils.serialize(item))
+        Logging:ERROR("Item name missing")
+        Logging:DEBUG("Item: " .. textutils.serialize(item))
         error = true
     end
     if not item[2] then
-        logging:ERROR("Item needed missing")
-        logging:DEBUG("Item: " .. textutils.serialize(item))
+        Logging:ERROR("Item needed missing")
+        Logging:DEBUG("Item: " .. textutils.serialize(item))
         error = true
     end
     if not item[3] then
-        logging:ERROR("Item available missing")
-        logging:DEBUG("Item: " .. textutils.serialize(item))
+        Logging:ERROR("Item available missing")
+        Logging:DEBUG("Item: " .. textutils.serialize(item))
         error = true
     end
     if not item[4] then
-        logging:ERROR("Item missing missing")
-        logging:DEBUG("Item: " .. textutils.serialize(item))
+        Logging:ERROR("Item missing missing")
+        Logging:DEBUG("Item: " .. textutils.serialize(item))
         error = true
     end
     if not item[5] then
-        logging:ERROR("Item status missing")
-        logging:DEBUG("Item: " .. textutils.serialize(item))
+        Logging:ERROR("Item status missing")
+        Logging:DEBUG("Item: " .. textutils.serialize(item))
         error = true
     end
     if error then
@@ -115,7 +115,7 @@ function Group:render()
             orderMsgStart = orderMsgStart .. "[R]"
         else
             orderMsgStart = orderMsgStart .. "[?]"
-            logging:ERROR("Unknown work order type: " .. self.order.workOrderType)
+            Logging:ERROR("Unknown work order type: " .. self.order.workOrderType)
         end
         if self.order.workOrderType == "UPGRADE" then
             orderMsgEnd = orderMsgEnd .. " (lvl" .. self.order.targetLevel - 1 .. " -> lvl" .. self.order.targetLevel .. ")"
@@ -254,7 +254,7 @@ end
 
 function Button:clicked(x, y)
     if x >= self.x - 1 and x < self.x + self.width and y >= self.y and y < self.y + self.height then -- self.x - 1, unsure why
-        logging:DEBUG("Button clicked: " .. self.label)
+        Logging:DEBUG("Button clicked: " .. self.label)
         if self.callback then
             self.callback(self.callbackArg)
         end

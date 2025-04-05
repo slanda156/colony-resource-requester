@@ -1,4 +1,4 @@
-logging = require("src/logging")
+Logging = require("src/logging")
 
 local strFuncs = {}
 
@@ -6,8 +6,8 @@ function strFuncs.compInt(number)
     if type(number) == "string" then
         number = tonumber(number)
     elseif type(number) ~= "number" then
-        logging:ERROR("Invalid number")
-        logging:DEBUG("Number: " .. textutils.serialize(number))
+        Logging:ERROR("Invalid number")
+        Logging:DEBUG("Number: " .. textutils.serialize(number))
         return
     end
     output = ""
@@ -31,8 +31,8 @@ end
 
 function checkEmptyTable(t)
     if type(t) ~= "table" then
-        logging:ERROR("Invalid table")
-        logging:DEBUG("Table: " .. textutils.serialize(t))
+        Logging:ERROR("Invalid table")
+        Logging:DEBUG("Table: " .. textutils.serialize(t))
         return false
     end
     for _, v in pairs(t) do
