@@ -75,8 +75,7 @@ function validateBuilder(builder)
 end
 
 function validateBridgeItem(item)
-    if item == nil then
-        logging:ERROR("bridgeItem is nil")
+    if item == nil or #item == 0 then
         return false
     end
     if item.name == nil then
@@ -116,7 +115,7 @@ function validateBridgeItem(item)
 end
 
 function validateRequestItem(item)
-    if item == nil then
+    if item == nil or #item == 0 then
         logging:ERROR("requestItem is nil")
         return false
     end
