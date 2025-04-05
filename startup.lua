@@ -1018,7 +1018,7 @@ function getInputs(skip)
                     local skipped = false
                     for _, allRequest in ipairs(allRequests) do
                         if allRequest.fingerprint == itemRequest.fingerprint then
-                            allRequest.needed = allRequest.needed + itemRequest.needed
+                            allRequest.needed = allRequest.needed + itemRequest.amount
                             skipped = true
                             break
                         end
@@ -1027,7 +1027,7 @@ function getInputs(skip)
                         local item = {
                             name=itemRequest.displayName,
                             fingerprint=itemRequest.fingerprint,
-                            needed=itemRequest.needed * request.count
+                            needed=itemRequest.amount * request.count
                         }
                         if mode ~= "DP" then
                             local existingItem, err = bridge.getItem({fingerprint=item.fingerprint})
