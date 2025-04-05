@@ -1032,7 +1032,7 @@ function getInputs(skip)
                         if mode ~= "DP" then
                             local existingItem, err = bridge.getItem({fingerprint=item.fingerprint})
                             if err ~= nil then
-                                logging:ERROR("Couldn't get item: " .. item.name .. " (" .. item.fingerprint .. ") | Error: " .. err)
+                                logging:DEBUG("Couldn't get item: " .. item.name .. " (" .. item.fingerprint .. ") | Error: " .. err)
                             end
                             local status = "m"
                             if validateBridgeItem(existingItem) then
@@ -1093,7 +1093,7 @@ function moveItems()
                         logging:DEBUG("Exporting item: " .. item.name .. " (" .. item.fingerprint .. ")" .. " Amount: " .. item.needed)
                         _, err = bridge.exportItemToPeripheral({fingerprint=item.fingerprint, count=item.needed}, outputInventory)
                         if err ~= nil then
-                            logging:ERROR("Couldn't export item: " .. item.name .. " (" .. item.fingerprint .. ") | Error: " .. err)
+                            logging:DEBUG("Couldn't export item: " .. item.name .. " (" .. item.fingerprint .. ") | Error: " .. err)
                         end
                     else
                         logging:WARNING("Ouput Inventory not empty")
@@ -1113,7 +1113,7 @@ function moveItems()
                                     logging:DEBUG("Crafting item: " .. item.name .. " (" .. item.fingerprint .. ")" .. " Amount: " .. item.missing)
                                     _, err = bridge.craftItem({fingerprint=item.fingerprint, count=item.missing})
                                     if err ~= nil then
-                                        logging:ERROR("Couldn't craft item: " .. item.name .. " (" .. item.fingerprint .. ") | Error: " .. err)
+                                        logging:DEBUG("Couldn't craft item: " .. item.name .. " (" .. item.fingerprint .. ") | Error: " .. err)
                                     end
                                 else
                                     logging:DEBUG("Item not craftable: " .. item.name .. " | " .. itemName .. " (" .. item.fingerprint .. ")")
@@ -1128,13 +1128,13 @@ function moveItems()
                                 if status then
                                     local itemName, err = bridge.getItem({fingerprint=item.fingerprint}).name
                                     if err ~= nil then
-                                        logging:ERROR("Couldn't get item: " .. item.name .. " (" .. item.fingerprint .. ") | Error: " .. err)
+                                        logging:DEBUG("Couldn't get item: " .. item.name .. " (" .. item.fingerprint .. ") | Error: " .. err)
                                     end
                                     if bridge.isItemCraftable({name=itemName}) then
                                         logging:DEBUG("Crafting item: " .. item.name .. " (" .. item.fingerprint .. ")" .. " Amount: " .. item.missing)
                                         _, err = bridge.craftItem({fingerprint=item.fingerprint, count=item.missing})
                                         if err ~= nil then
-                                            logging:ERROR("Couldn't craft item: " .. item.name .. " (" .. item.fingerprint .. ") | Error: " .. err)
+                                            logging:DEBUG("Couldn't craft item: " .. item.name .. " (" .. item.fingerprint .. ") | Error: " .. err)
                                         end
                                         freeCPUs = freeCPUs - 1
                                     else
