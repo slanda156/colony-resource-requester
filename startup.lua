@@ -1036,7 +1036,7 @@ function getInputs(skip)
                             end
                             local status = "m"
                             if validateBridgeItem(existingItem) then
-                                if item.needed > existingItem.needed then
+                                if item.needed > existingItem.amount then
                                     if bridge.isItemCrafting({fingerprint=item.fingerprint}) then
                                         status = "c"
                                     end
@@ -1044,8 +1044,8 @@ function getInputs(skip)
                                     status = "a"
                                 end
                                 item.status = status
-                                item.available = existingItem.needed
-                                item.missing = item.needed - existingItem.needed
+                                item.available = existingItem.amount
+                                item.missing = item.needed - existingItem.amount
                                 if item.missing < 0 then
                                     item.missing = 0
                                 end
