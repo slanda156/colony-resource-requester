@@ -970,6 +970,12 @@ function getInputs(skip)
                     end
                     local skipped = false
                     if not skipped then
+                        if builderItem.components ~= nil and (mode ~= "DP") then -- ToDo: Temporary fix for wrong fingerprint from colonyIntegrator
+                            local _item, err = bridge.getItem({name=builderItem.name, nbt=builderItem.components})
+                            if _item ~= nil and err == nil then
+                                builderItem.fingerprint = _item.fingerprint
+                            end
+                        end
                         local item = {
                             name=builderItem.displayName,
                             fingerprint=builderItem.fingerprint,
@@ -1015,6 +1021,12 @@ function getInputs(skip)
         if allowed then
             for _, itemRequest in ipairs(request.items) do
                 if itemRequest ~= nil and validateRequestItem(itemRequest) then
+                    if itemRequest.components ~= nil and (mode ~= "DP") then -- ToDo: Temporary fix for wrong fingerprint from colonyIntegrator
+                        local _item, err = bridge.getItem({name=itemRequest.name, nbt=itemRequest.components})
+                        if _item ~= nil and err == nil then
+                            itemRequest.fingerprint = _item.fingerprint
+                        end
+                    end
                     local skipped = false
                     for _, allRequest in ipairs(allRequests) do
                         if allRequest.fingerprint == itemRequest.fingerprint then
