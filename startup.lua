@@ -329,10 +329,7 @@ function callbackRefresh ()
             mode = "NI"
         end
     end
-    os.cancelTimer(timerUpdate)
-    os.cancelTimer(timerIntervall)
-    timerUpdate = os.startTimer(1)
-    timerIntervall = os.startTimer(config.updateInterval)
+    timerIntervall = config.updateInterval
 end
 
 function callbackScroll (direction)
@@ -1211,36 +1208,36 @@ function touchEvent()
 end
 
 function timerEvent()
-    local event, id = os.pullEvent("timer")
-    if id == timerUpdate then
-        -- Get inputs
-        builders, builderCount = getBuilders()
-        if mode ~= "DP" and bridge ~= nil and bridge.getEnergyUsage() then
-            getInputs(false)
-        elseif mode ~= "DP" then
-            Logging:ERROR("ME/RS system not working")
-            Logging:INFO("Retrying in 10 seconds")
-            timerUpdate = os.startTimer(10)
-            return
-        elseif mode == "DP" then
-            getInputs(true) -- skip the bridge part
-        end
-        -- Update display
-        if displayMode then
-            os.queueEvent("display_update")
-        end
-        Heartbeat = not Heartbeat
-        timerUpdate = os.startTimer(1)
-    elseif id == timerIntervall then
+    os.pullEvent("timer")
+    Logging:DEBUG("Timer event")
+    timerIntervall = timerIntervall - 1
+    -- Get inputs
+    builders, builderCount = getBuilders()
+    if mode ~= "DP" and bridge ~= nil and bridge.getEnergyUsage() then
+        getInputs(false)
+    elseif mode ~= "DP" then
+        Logging:ERROR("ME/RS system not working")
+        Logging:INFO("Retrying in 10 seconds")
+        return
+    elseif mode == "DP" then
+        getInputs(true) -- skip the bridge part
+    end
+    -- Update display
+    if displayMode then
+        os.queueEvent("display_update")
+    end
+    if timerIntervall <= 0 then
+        Logging:DEBUG("timerIntervall")
+        timerIntervall = config.updateInterval
         local success = true
         if widgets.autoButton.active then
             success = moveItems()
         end
-        if success == false then
+        if not success then
             mode = "NI"
         end
-        timerIntervall = os.startTimer(config.updateInterval)
     end
+    Heartbeat = not Heartbeat
 end
 
 function terminateEvent()
@@ -1272,6 +1269,7 @@ function mainLoop ()
             monitorResizeEvent
         }
         parallel.waitForAny(table.unpack(functions))
+        timerUpdate = os.startTimer(1)
     end
 end
 
@@ -1307,7 +1305,7 @@ if not startupSuccess then
 else
     Logging:INFO("Startup successful")
     timerUpdate = os.startTimer(1)
-    timerIntervall = os.startTimer(config.updateInterval)
+    timerIntervall = config.updateInterval
     mainLoop()
     -- Performance testing
     if config.testPerformance then
