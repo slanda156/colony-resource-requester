@@ -1018,7 +1018,7 @@ function getInputs(skip)
                     local skipped = false
                     for _, allRequest in ipairs(allRequests) do
                         if allRequest.fingerprint == itemRequest.fingerprint then
-                            allRequest.needed = allRequest.needed + itemRequest.needed
+                            allRequest.needed = allRequest.needed + itemRequest.amount
                             skipped = true
                             break
                         end

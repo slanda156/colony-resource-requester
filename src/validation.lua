@@ -128,7 +128,7 @@ function validateRequestItem(item)
         logging:DEBUG("requestItem.displayName is nil")
         item.displayName = item.name
     end
-    if item.needed == nil then
+    if item.amount == nil then
         -- Check if item.count if available (1.21.1+)
         if item.count ~= nil then
             item.amount = item.count
