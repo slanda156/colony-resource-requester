@@ -97,8 +97,10 @@ end
 
 function Logger:log(level, msg)
     if self.firstMsg then
-        local file = fs.open(self.logFile, "a")
-        file.write("\n")
+        local file = fs.open(self.logFile, self.logMode)
+        if self.logMode == "a" then
+            file.write("\n")
+        end
         file.close()
         self.firstMsg = false
     end

@@ -76,7 +76,7 @@ function createConfig ()
     config.testPerformance = false
     config.lastTab = 0
     config.logging = {}
-    config.logging.logFile = "config.log"
+    config.logging.logFile = "crr.log"
     config.logging.logMode = "a"
     config.logging.logLevel = "INFO"
     config.logging.logTimeSource = "local"
