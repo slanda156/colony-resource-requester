@@ -38,16 +38,21 @@ function validateBuilderRequest(request)
         logging:ERROR("builderRequest.item is nil")
         return false
     end
-    if request.needed == nil and type(request.needed) ~= "number" then
-        logging:DEBUG("builderRequest.needed is nil or not a number")
-        request.needed = 0
+    if request.needed == nil then
+        -- Check if item.needs if available (1.21.1+)
+        if request.needs ~= nil then
+            request.amount = request.needs
+        else
+            logging:DEBUG("builderRequest.needed is nil")
+            request.needs = 0
+        end
     end
-    if request.available == nil and type(request.available) ~= "boolean" then
-        logging:DEBUG("builderRequest.available is nil or not a boolean")
+    if request.available == nil then
+        logging:DEBUG("builderRequest.available is nil")
         request.available = false
     end
-    if request.delivering == nil and type(request.delivering) ~= "boolean" then
-        logging:DEBUG("builderRequest.delivering is nil or not a boolean")
+    if request.delivering == nil then
+        logging:DEBUG("builderRequest.delivering is nil")
         request.delivering = false
     end
     return true
@@ -83,8 +88,13 @@ function validateBridgeItem(item)
         return false
     end
     if item.amount == nil then
-        logging:DEBUG("bridgeItem.amount is nil")
-        item.amount = 0
+        -- Check if item.count if available (1.21.1+)
+        if item.count ~= nil then
+            item.amount = item.count
+        else
+            logging:DEBUG("bridgeItem.amount is nil")
+            item.amount = 0
+        end
     end
     if item.displayName == nil then
         logging:DEBUG("bridgeItem.displayName is nil")
@@ -110,29 +120,26 @@ function validateRequestItem(item)
         logging:ERROR("requestItem is nil")
         return false
     end
-    if item.item == nil then
-        logging:ERROR("requestItem.item is nil")
+    if item.name == nil then
+        logging:ERROR("requestItem.name is nil")
         return false
     end
     if item.displayName == nil then
         logging:DEBUG("requestItem.displayName is nil")
-        item.displayName = item.item
+        item.displayName = item.name
     end
-    if item.status == nil then
-        logging:ERROR("requestItem.status is nil")
-        return false
+    if item.needed == nil then
+        -- Check if item.count if available (1.21.1+)
+        if item.count ~= nil then
+            item.amount = item.count
+        else
+            logging:DEBUG("requestItem.amount is nil")
+            item.amount = 0
+        end
     end
-    if item.needed == nil and type(item.needed) ~= "number" then
-        logging:DEBUG("requestItem.needed is nil or not a number")
-        item.needed = 0
-    end
-    if item.available == nil and type(item.available) ~= "boolean" then
-        logging:DEBUG("requestItem.available is nil or not a boolean")
-        item.available = false
-    end
-    if item.delivering == nil and type(item.delivering) ~= "boolean" then
-        logging:DEBUG("requestItem.delivering is nil or not a boolean")
-        item.delivering = false
+    if item.tags == nil then
+        logging:DEBUG("requestItem.tags is nil")
+        item.tags = {}
     end
     return true
 end

@@ -1014,11 +1014,11 @@ function getInputs(skip)
         end
         if allowed then
             for _, itemRequest in ipairs(request.items) do
-                if validateRequestItem(itemRequest) then
+                if itemRequest ~= nil and validateRequestItem(itemRequest) then
                     local skipped = false
                     for _, allRequest in ipairs(allRequests) do
                         if allRequest.fingerprint == itemRequest.fingerprint then
-                            allRequest.needed = allRequest.needed + itemRequest.count
+                            allRequest.needed = allRequest.needed + itemRequest.needed
                             skipped = true
                             break
                         end
@@ -1027,13 +1027,16 @@ function getInputs(skip)
                         local item = {
                             name=itemRequest.displayName,
                             fingerprint=itemRequest.fingerprint,
-                            needed=itemRequest.count * request.count
+                            needed=itemRequest.needed * request.count
                         }
                         if mode ~= "DP" then
-                            local existingItem = bridge.getItem({fingerprint=item.fingerprint})
+                            local existingItem, err = bridge.getItem({fingerprint=item.fingerprint})
+                            if err ~= nil then
+                                logging:ERROR("Couldn't get item: " .. item.name .. " (" .. item.fingerprint .. ") | Error: " .. err)
+                            end
                             local status = "m"
                             if validateBridgeItem(existingItem) then
-                                if item.needed > existingItem.amount then
+                                if item.needed > existingItem.needed then
                                     if bridge.isItemCrafting({fingerprint=item.fingerprint}) then
                                         status = "c"
                                     end
@@ -1041,8 +1044,8 @@ function getInputs(skip)
                                     status = "a"
                                 end
                                 item.status = status
-                                item.available = existingItem.amount
-                                item.missing = item.needed - existingItem.amount
+                                item.available = existingItem.needed
+                                item.missing = item.needed - existingItem.needed
                                 if item.missing < 0 then
                                     item.missing = 0
                                 end
