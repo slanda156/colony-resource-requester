@@ -1,5 +1,5 @@
 Logging = require("src/logging")
-strFuncs = require("src/function").strFuncs
+Functions = require("src/function")
 
 local Group = {}
 Group.__index = Group
@@ -168,9 +168,9 @@ function Group:render()
                 if string.len(label) > maxLabelLength then
                     label = string.sub(label, 1, maxLabelLength - 3) .. "..."
                 end
-                local needed = strFuncs.compInt(item[2])
-                local available = strFuncs.compInt(item[3])
-                local missing = strFuncs.compInt(item[4])
+                local needed = Functions.compInt(item[2])
+                local available = Functions.compInt(item[3])
+                local missing = Functions.compInt(item[4])
                 self.monitor.write(string.rep(" ", width))
                 self.monitor.setCursorPos(4, line + i)
                 self.monitor.write(label)

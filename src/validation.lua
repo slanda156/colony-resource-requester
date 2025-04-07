@@ -1,7 +1,9 @@
 Logging = require("src/logging")
-functions = require("src/function")
+Functions = require("src/function")
 
-function validateConfig (config)
+local validation = {}
+
+function validation.config (config)
     if config == nil then -- Invalid config
         Logging:DEBUG("Config is nil")
         return -1
@@ -14,14 +16,14 @@ function validateConfig (config)
         Logging:DEBUG("Config version is outdated")
         return 0
     end
-    local modelConfig = createConfig()
+    local modelConfig = CreateConfig()
     for key, value in pairs(modelConfig) do
         if config[key] == nil then
             Logging:DEBUG("Config key missing: " .. key)
             return -1
         end
         if type(value) == "table" then
-            if not compareTable(value, config[key]) then
+            if not AreTablesEqualTypes(value, config[key]) then
                 Logging:DEBUG("Config key invalid: " .. key)
                 return -1
             end
@@ -30,7 +32,7 @@ function validateConfig (config)
     return 1
 end
 
-function validateBuilderRequest(request)
+function validation.builderRequest(request)
     if request == nil or checkEmptyTable(request) then
         Logging:ERROR("builderRequest is nil")
         return false
@@ -59,7 +61,7 @@ function validateBuilderRequest(request)
     return true
 end
 
-function validateBuilder(builder)
+function validation.builder(builder)
     if builder == nil or checkEmptyTable(builder) then
         Logging:ERROR("builder is nil")
         return false
@@ -75,7 +77,7 @@ function validateBuilder(builder)
     return true
 end
 
-function validateBridgeItem(item)
+function validation.bridgeItem(item)
     if item == nil or checkEmptyTable(item) then
         return false
     end
@@ -120,7 +122,7 @@ function validateBridgeItem(item)
     return true
 end
 
-function validateRequestItem(item)
+function validation.requestItem(item)
     if item == nil or checkEmptyTable(item) then
         Logging:ERROR("requestItem is nil")
         return false
@@ -149,10 +151,4 @@ function validateRequestItem(item)
     return true
 end
 
-return {
-    validateConfig = validateConfig,
-    validateBuilderRequest = validateBuilderRequest,
-    validateBuilder = validateBuilder,
-    validateBridgeItem = validateBridgeItem,
-    validateRequestItem = validateRequestItem
-}
+return validation
