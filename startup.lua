@@ -1107,7 +1107,7 @@ function moveItems()
                     if item.missing > 0 then
                         if ExecutionMode == "RS" then
                             itenName = ""
-                            local status, _ = pcall(function () itemName = bridge.getItem({fingerprint=item.fingerprint}).name end)
+                            local status, err = pcall(function () itemName = bridge.getItem({fingerprint=item.fingerprint}).name end)
                             if status then
                                 if bridge.isItemCraftable({name=itemName}) then
                                     Logging:DEBUG("Crafting item: " .. item.name .. " (" .. item.fingerprint .. ")" .. " Amount: " .. item.missing)
@@ -1124,7 +1124,7 @@ function moveItems()
                         elseif ExecutionMode == "ME" then
                             if FreeCPUs > 0 then
                                 itenName = ""
-                                local status, _ = pcall(function () itemName = bridge.getItem({fingerprint=item.fingerprint}).name end)
+                                local status, err = pcall(function () itemName = bridge.getItem({fingerprint=item.fingerprint}).name end)
                                 if status then
                                     local _item, err = bridge.getItem({fingerprint=item.fingerprint})
                                     local itemName = _item.name
