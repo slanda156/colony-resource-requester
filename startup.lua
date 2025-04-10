@@ -654,7 +654,7 @@ function RefreshMonitor (mon)
                 end
                 mon.setTextColor(c)
                 local iStr = tostring(i)
-                mon.write(iStr .. string.rep(" ", 4 - #iStr) .. building.style .. " " .. building.type)
+                mon.write(iStr .. string.rep(" ", 4 - #iStr) .. building.style .. " " .. building.type:gsub("^%l", string.upper))
                 local msg = "(" .. building.level .. "|" .. building.maxLevel .. ") | " .. building.priority
                 mon.setCursorPos(width - #msg, line)
                 mon.write(msg)
