@@ -1,7 +1,7 @@
-startup:
+App:
     ToDo Generally:
         ☐ Test headless fix
-        ☐ Optimize the request getting
+        ✔ Optimize the request getting @done(25-04-10 21:15)
         ☐ Check food and fuel requests
 
     ToDo 0.3.0:
@@ -10,10 +10,13 @@ startup:
         ☐ Add color to the log terminal outout ?
         ✔ Add a settings file @done(24-08-25 19:58)
         ☐ Add a settings tab
+        ☐ Move the Stats tab one line up
+        ☐ Move the Visitors tab one line up
+        ✔ Make the first letter of the buildings name upper case @done(25-04-10 21:14)
+
+        ToDo Future:
         ☐ Add a whitelist for tools, weapons, and armor
         ☐ Add a blacklist for items
-
-    ToDo Future:
         ☐ Add WIFI
 
     Fixes:
@@ -28,9 +31,9 @@ startup:
         ☐ Fix the crash when switch builders in request tab
         ☐ Fix the weird scrolling at request tab
 
-installer:
+Installer:
     ToDo:
-        ☐ Make for installer updates a seperate branch
+        ✔ Make for installer updates a seperate branch @done(25-04-10 21:16)
         ☐ Update the installer only when supplied with a -u or --update flag
         ☐ Make function for each step
         ☐ Only ask to overwrite configs when it exists and updating
