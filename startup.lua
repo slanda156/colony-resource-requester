@@ -331,7 +331,6 @@ function InitializeDisplay(mon)
     Widgets[7] = {"saveSettings", "filterRequests", "filterBuilders", "wifiSettings"}
     ResetDisplay(mon)
     Builders, BuilderCount = getBuilders()
-    GetInputs(false, currentTab)
     local width, height = mon.getSize()
     -- UP | DOWN | Requests | Work Orders | Citizens | Visitors | Buildings | Research | Stats
     widgets = {}
@@ -521,9 +520,11 @@ function RefreshMonitor (mon)
             end
         end
         mon.setBackgroundColor(colors.black)
-        mon.setTextColor(colors.red)
+        mon.setTextColor(colors.green)
         mon.setCursorPos(1, height)
-        mon.write("Not Claimed")
+        mon.write("Claimed")
+        mon.setTextColor(colors.red)
+        mon.write(" Not Claimed")
     elseif currentTab == 2 then
         -- Citizens
         mon.setBackgroundColor(colors.gray)
@@ -604,7 +605,7 @@ function RefreshMonitor (mon)
         -- Visitors
         mon.setTextColor(colors.black)
         for i, visitor in ipairs(Visitors) do
-            local line = 4 + (i-1) * 2 - LineOffset
+            local line = 3 + (i-1) * 2 - LineOffset
             if i - LineOffset > height - 3 then
                 break
             end
@@ -716,24 +717,24 @@ function RefreshMonitor (mon)
         mon.setBackgroundColor(colors.lightGray)
         mon.setTextColor(colors.black)
         for i = 1, 10 do
-            mon.setCursorPos(1, i + 3)
+            mon.setCursorPos(1, i + 2)
             mon.write(string.rep(" ", width))
         end
-        mon.setCursorPos(2, 4)
+        mon.setCursorPos(2, 3)
         mon.write("Colony: " .. ColonyName)
-        mon.setCursorPos(2, 5)
+        mon.setCursorPos(2, 4)
         mon.write("Citizens: " .. CurrentCitizen .. "/" .. MaxCitizens)
-        mon.setCursorPos(2, 6)
+        mon.setCursorPos(2, 5)
         mon.write("Children: " .. #Children)
-        mon.setCursorPos(2, 7)
+        mon.setCursorPos(2, 6)
         mon.write("Idle Citizens: " .. IdleCitizens)
-        mon.setCursorPos(2, 8)
+        mon.setCursorPos(2, 7)
         mon.write("Homeless Citizens: " .. HomlessCitizens)
-        mon.setCursorPos(2, 9)
+        mon.setCursorPos(2, 8)
         mon.write("Jobless Citizens: " .. JoblessCitizens)
-        mon.setCursorPos(2, 10)
+        mon.setCursorPos(2, 9)
         mon.write("Happiness: " .. (math.floor(Happiness * 10)) / 10)
-        mon.setCursorPos(2, 11)
+        mon.setCursorPos(2, 10)
         local attackText = ""
         if UnderAttack then
             mon.setBackgroundColor(colors.red)
@@ -744,9 +745,9 @@ function RefreshMonitor (mon)
         end
         mon.write("Under Attack: " .. attackText)
         mon.setBackgroundColor(colors.lightGray)
-        mon.setCursorPos(2, 12)
+        mon.setCursorPos(2, 11)
         mon.write("Graves: " .. Graves)
-        mon.setCursorPos(2, 13)
+        mon.setCursorPos(2, 12)
         mon.write("Buildings: " .. BuilderCount)
 
     end
@@ -964,7 +965,7 @@ function GetInputs(skip, tab)
         Builders, BuilderCount = getBuilders()
         if BuilderCount > 0 then
             -- Get request for this builder
-            local builder = builders[CurrentInputIteration]
+            local builder = Builders[CurrentInputIteration]
             if builder ~= nil then
                 local builderRequests = colony.getBuilderResources(builder.pos)
                 if builderRequests == nil then
@@ -1285,10 +1286,16 @@ if not StartupSuccess then
     Running = false
 else
     Logging:INFO("Startup successful")
-    timerUpdate = os.startTimer(1)
     Builders, BuilderCount = getBuilders()
     for i = 1, BuilderCount do
         table.insert(BuilderRequests, {})
+    end
+    for i = 0, 7 do
+        GetInput(false, i)
+    end
+    timerUpdate = os.startTimer(1)
+    if displayMode then
+        os.queueEvent("display_update")
     end
     mainLoop()
     -- Performance testing
