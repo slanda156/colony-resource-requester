@@ -462,7 +462,7 @@ function RefreshMonitor (mon)
                 end
             end
             i = i + 1
-        until i == builderCount
+        until i >= BuilderCount
         -- Green: Available, Yellow: Requested, Red: Missing, Blue: Blacklisted | Heartbeat
         mon.setBackgroundColor(colors.black)
         mon.setCursorPos(1, height)
@@ -1285,18 +1285,23 @@ if not StartupSuccess then
     Logging:ERROR("Startup failed")
     Running = false
 else
-    Logging:INFO("Startup successful")
     Builders, BuilderCount = getBuilders()
     for i = 1, BuilderCount do
         table.insert(BuilderRequests, {})
     end
     for i = 0, 7 do
+        if i == 0 then
+            for _ = 0, BuilderCount do
+                GetInputs(false, i)
+            end
+        end
         GetInputs(false, i)
     end
-    timerUpdate = os.startTimer(1)
+    timerUpdate = os.startTimer(5)
     if displayMode then
         os.queueEvent("display_update")
     end
+    Logging:INFO("Startup successful")
     mainLoop()
     -- Performance testing
     if Config.testPerformance then
