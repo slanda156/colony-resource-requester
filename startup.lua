@@ -1290,13 +1290,6 @@ else
     for i = 1, BuilderCount do
         table.insert(BuilderRequests, {})
     end
-    for i = 0, 7 do
-        GetInputs(false, i)
-    end
-    timerUpdate = os.startTimer(1)
-    if displayMode then
-        os.queueEvent("display_update")
-    end
     mainLoop()
     -- Performance testing
     if Config.testPerformance then
