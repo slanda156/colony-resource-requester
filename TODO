@@ -7,7 +7,7 @@ App:
     ToDo 0.3.0:
         ✔ Add scrolling @done(24-08-25 19:58)
         ✔ Add stats tab @done(24-08-25 19:58)
-        ☐ Add color to the log terminal output ?
+        ✔ Add color to the log terminal output @done(25-04-12 15:05)
         ✔ Add a settings file @done(24-08-25 19:58)
         ☐ Add a settings tab
         ✔ Move the Stats tab one line up @done(25-04-11 09:30)
@@ -20,6 +20,7 @@ App:
         ☐ Add a whitelist for tools, weapons, and armor
         ☐ Add a blacklist for items
         ☐ Add WIFI
+        ☐ Add terminal scrolling
 
     Fixes:
         ✔ Fix buggy item count, only item count of 1 @done(24-08-21 21:57)
@@ -33,7 +34,7 @@ App:
         ☐ Fix the crash when switch builders in request tab
         ☐ Fix the weird scrolling at request tab
         ☐ Fix the fist line in work orders tab (blank)
-        ☐ Fix the crash of switching tabs after startup
+        ✔ Fix the crash of switching tabs after startup @done(25-04-11 10:17)
 
 Installer:
     ToDo:
