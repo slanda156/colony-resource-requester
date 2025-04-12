@@ -28,6 +28,9 @@ function compInt(number)
 end
 
 function checkEmptyTable(t)
+    if t == nil then
+        return false
+    end
     if type(t) ~= "table" then
         Logging:ERROR("Invalid table")
         return false
