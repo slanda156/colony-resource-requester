@@ -885,7 +885,8 @@ function GetInputs(skip, tab)
         for _, colonyRequest in ipairs(rawColonyRequests) do
             -- Check invalid requests
             if not Validating.requestItem(colonyRequest) then
-                Logging:DEBUG("Invalid request: " .. textutils.serializeJSON(colonyRequest))
+                Logging:WARNING("Invalid request")
+                Logging:DEBUG("Request: " .. textutils.serializeJSON(colonyRequest))
                 goto continue
             end
             -- Do the filtering
