@@ -901,20 +901,20 @@ function GetInputs(skip, tab)
                     OverwriteItem(requestedItem)
                     -- Check if item is allready in requested
                     local found = false
-                    for _, item in ipairs(ColonyRequests) do
-                        if item.fingerprint == requestedItem.fingerprint then
-                            item.needed = item.needed + requestedItem.count
-                            if item.needed > item.available then
-                                item.missing = item.needed - item.available
-                            end
-                            if ExecutionMode ~= "DP" then
-                                SetItemStatus(item, bridge.isItemCrafting({fingerprint=requestedItem.fingerprint}))
-                            else
-                                SetItemStatus(item, false)
-                            end
-                            found = true
-                            break
+                    if ColonyRequests[requestedItem.fingerprint] ~= nil then
+                        local item = ColonyRequests[requestedItem.fingerprint]
+                        item.needed = item.needed + requestedItem.count
+                        if item.needed > item.available then
+                            item.missing = item.needed - item.available
                         end
+                        if ExecutionMode ~= "DP" then
+                            SetItemStatus(item, bridge.isItemCrafting({fingerprint=requestedItem.fingerprint}))
+                        else
+                            SetItemStatus(item, false)
+                        end
+                        ColonyRequests[requestedItem.fingerprint] = item
+                        found = true
+                        break
                     end
                     -- If item is not in requested, add it
                     if not found then
@@ -958,7 +958,7 @@ function GetInputs(skip, tab)
                                 item.missing = item.needed
                             end
                         end
-                        table.insert(ColonyRequests, item)
+                        ColonyRequests[item.fingerprint] = item
                     end
                 end
             end
@@ -985,16 +985,16 @@ function GetInputs(skip, tab)
                             OverwriteItem(builderItem)
                             -- Check if item is allready in requested
                             local found = false
-                            for _, item in ipairs(BuilderRequests[builder.id].items) do
-                                if item.fingerprint == builderItem.fingerprint then
-                                    item.needed = item.needed + builderRequest.item.count * builderRequest.needed
-                                    if item.needed > item.available then
-                                        item.missing = item.needed - item.available
-                                    end
-                                    SetItemStatus(item, builderRequest.delivering)
-                                    found = true
-                                    break
+                            if BuilderRequests[builder.id][builderItem.fingerprint] ~= nil then
+                                local item = BuilderRequests[builder.id][builderItem.fingerprint]
+                                item.needed = item.needed + builderRequest.item.count * builderRequest.needed
+                                if item.needed > item.available then
+                                    item.missing = item.needed - item.available
                                 end
+                                SetItemStatus(item, builderRequest.delivering)
+                                BuilderRequests[builder.id][builderItem.fingerprint] = item
+                                found = true
+                                break
                             end
                             if not found then
                                 local item = {
@@ -1008,7 +1008,7 @@ function GetInputs(skip, tab)
                                     item.missing = 0
                                 end
                                 SetItemStatus(item, builderRequest.delivering)
-                                table.insert(BuilderRequests[builder.id].items, item)
+                                BuilderRequests[builder.id][builderItem.fingerprint] = item
                             end
                         end
                     end
