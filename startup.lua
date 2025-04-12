@@ -10,6 +10,7 @@ function CreateConfig ()
     config.version = VERSION
     config.updateInterval = 5
     config.forceHeadless = false
+    config.oneCall = false
     config.testPerformance = false
     config.lastTab = 0
     config.logging = {}
@@ -879,6 +880,20 @@ function GetInputs(skip, tab)
     if ExecutionMode == "ME" and not skip then
         _, FreeCPUs = GetCraftingCpus()
     end
+
+    local bridgeItems = {}
+    if ExecutionMode ~= "DP" and not skip and Config.oneCall then
+        local rawBridgeItems, err = bridge.listItems()
+        if err ~= nil then
+            Logging:ERROR("Error getting items from bridge: " .. err)
+        end
+        for _, item in ipairs(rawBridgeItems) do
+            if item ~= nil then
+                bridgeItems[item.fingerprint] = item
+            end
+        end
+    end
+
     if CurrentInputIteration == 0 then -- Colony Requests
         ColonyRequests = {}
         local rawColonyRequests = colony.getRequests()
@@ -908,7 +923,7 @@ function GetInputs(skip, tab)
                         if item.needed > item.available then
                             item.missing = item.needed - item.available
                         end
-                        if ExecutionMode ~= "DP" then
+                        if ExecutionMode ~= "DP" and not skip then
                             SetItemStatus(item, bridge.isItemCrafting({fingerprint=requestedItem.fingerprint}))
                         else
                             SetItemStatus(item, false)
@@ -929,14 +944,20 @@ function GetInputs(skip, tab)
                         else
                             item.needed = requestedItem.count * colonyRequest.count
                         end
-                        if ExecutionMode == "DP" then
+                        if ExecutionMode == "DP" and not skip then
                             item.status = "m"
                             item.available = 0
                             item.missing = item.needed
                         else
-                            local availableItem, err = bridge.getItem({fingerprint=requestedItem.fingerprint})
-                            if err ~= nil then
-                                Logging:DEBUG("Error getting item: " .. err)
+                            local availableItem = nil
+                            if Config.oneCall then
+                                availableItem = bridgeItems[requestedItem.fingerprint]
+                            else
+                                local err = nil
+                                availableItem, err = bridge.getItem({fingerprint=requestedItem.fingerprint})
+                                if err ~= nil then
+                                    Logging:DEBUG("Error getting item: " .. err)
+                                end
                             end
                             local status = "m"
                             if Validating.bridgeItem(availableItem) then
@@ -1091,7 +1112,7 @@ function moveItems()
                 empty = false
             end
         end
-        for _, item in ipairs(ColonyRequests) do
+        for _, item in pairs(ColonyRequests) do
             if item.status == "a" then
                 if ExecutionMode ~= "NI" then
                     if empty then
