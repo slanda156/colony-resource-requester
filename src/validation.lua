@@ -132,7 +132,6 @@ function validation.requestItem(item)
         return false
     end
     if item.displayName == nil then
-        Logging:DEBUG("requestItem.displayName is nil")
         item.displayName = item.name
     end
     if item.amount == nil then
@@ -145,7 +144,6 @@ function validation.requestItem(item)
         end
     end
     if item.tags == nil then
-        Logging:DEBUG("requestItem.tags is nil")
         item.tags = {}
     end
     return true
