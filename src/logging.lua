@@ -1,4 +1,5 @@
-local allLevels = {DEBUG=0, INFO=1, WARNING=2, ERROR=3}
+local allLevels = {DEBUG=true, INFO=true, WARNING=true, ERROR=true}
+local levelColors = {DEBUG=colors.cyan, INFO=colors.white, WARNING=colors.yellow, ERROR=colors.red}
 
 -- https://stackoverflow.com/questions/640642/how-do-you-copy-a-lua-table-by-value
 function copy(obj, seen)
@@ -24,7 +25,17 @@ function Logger.new()
     self.logTimeFormat = true
     self.allowedLevels = copy(allLevels)
     self.firstMsg = true
+    self._formatedTime = textutils.formatTime(os.time(self.logTimeSource), self.logTimeFormat)
+    self._lastFormatedTime = os.time(self.logTimeSource)
+    self._file = fs.open(self.logFile, self.logMode)
+    self._termWidth, self._termHeight = term.getSize()
     return self
+end
+
+function Logger:destroy()
+    if self._file ~= nil then
+        self._file.close()
+    end
 end
 
 function Logger:setLogConfig(t)
@@ -84,6 +95,10 @@ function Logger:setLogFile(file)
         self:ERROR("Invalid log file, " .. type(file))
         return
     end
+    if self.logFile ~= nil then
+        self._file.close()
+        self._file = fs.open(file, self.logMode)
+    end
     self.logFile = file
 end
 
@@ -97,32 +112,35 @@ end
 
 function Logger:log(level, msg)
     if self.firstMsg then
-        local file = fs.open(self.logFile, self.logMode)
         if self.logMode == "a" then
-            file.write("\n")
+            self._file.write("\n")
         end
-        file.close()
         self.firstMsg = false
     end
-    if type(level) ~= "string" then
-        self:WARNING("Invalid log level, " .. tostring(level))
-        return
-    end
-    if type(msg) ~= "string" then
-        self:WARNING("Invalid log message, " .. type(msg))
-        return
-    end
     if self.allowedLevels[level] ~= nil then
-        local finalMsg = textutils.formatTime(os.time(self.logTimeSource), self.logTimeFormat) .. " - " .. level .. " - " ..  msg
-        print(finalMsg)
-        local file = fs.open(self.logFile, "a")
-        if type(file) == "string" then
-            print("Couldn't open log file")
-            print(file)
-        else
-            file.write(finalMsg .. "\n")
+        -- Check if the time has changed
+        if os.time(self.logTimeSource) - self._lastFormatedTime > 1 then
+            self._formatedTime = textutils.formatTime(os.time(self.logTimeSource), self.logTimeFormat)
+            self._lastFormatedTime = os.time(self.logTimeSource)
         end
-        file.close()
+        -- Construct the message
+        local finalMsg = table.concat({self._formatedTime, " - ", level, " - ", tostring(msg)})
+        local termMsg = ""
+        -- Check if the message is too long
+        if #finalMsg > self._termWidth then
+            termMsg = string.sub(finalMsg, 1, self._termWidth - 3) .. "..."
+        else
+            termMsg = finalMsg
+        end
+        -- Log to terminal
+        term.setTextColor(levelColors[level])
+        term.setBackgroundColor(colors.black)
+        print(termMsg) --ToDo: Possibly create own print function to handle scrolling in the terminal
+        -- Log to file
+        if self._file == nil then
+            self._file = fs.open(self.logFile, self.logMode)
+        end
+        self._file.write(finalMsg .. "\n")
     end
 end
 

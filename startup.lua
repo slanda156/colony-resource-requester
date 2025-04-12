@@ -1353,3 +1353,4 @@ if displayMode then
 end
 SaveConfig(Config)
 Logging:INFO("Stopped")
+Logging:destroy()
