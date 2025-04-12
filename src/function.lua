@@ -30,15 +30,9 @@ end
 function checkEmptyTable(t)
     if type(t) ~= "table" then
         Logging:ERROR("Invalid table")
-        Logging:DEBUG("Table: " .. textutils.serialize(t))
         return false
     end
-    for _, v in pairs(t) do
-        if v ~= nil then
-            return false
-        end
-    end
-    return true
+    return next(t) == nil
 end
 
 function InsertAt (str, char, i)
