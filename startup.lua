@@ -430,9 +430,9 @@ function RefreshMonitor (mon)
         mon.write(string.rep(" ", 6 - string.len("Miss")))
         widgets.allGroupRequests:clear()
         widgets.allGroupRequests.LineOffset = LineOffset
-        if ColonyRequests ~= nil and ColonyRequests ~= {} then
-            for _, item in ipairs(ColonyRequests) do
-                if item then
+        if not checkEmptyTable(ColonyRequests) then
+            for _, item in pairs(ColonyRequests) do
+                if item ~= nil then
                     widgets.allGroupRequests:addItem({item.name, item.needed, item.available, item.missing, item.status})
                 end
             end
@@ -448,8 +448,8 @@ function RefreshMonitor (mon)
                         widget:clear()
                         widget.LineOffset = LineOffset
                         widget:setOrder(BuilderRequests[i].order)
-                        if BuilderRequests[i].items ~= nil then
-                            for _, item in ipairs(BuilderRequests[i].items) do
+                        if not checkEmptyTable(BuilderRequests[i].items) then
+                            for _, item in pairs(BuilderRequests[i].items) do
                                 if item ~= nil then
                                     widget:addItem({item.name, item.needed, item.available, item.missing, item.status})
                                 end
@@ -993,7 +993,7 @@ function GetInputs(skip, tab)
                                     item.missing = item.needed - item.available
                                 end
                                 SetItemStatus(item, builderRequest.delivering)
-                                BuilderRequests[builder.id][builderItem.fingerprint] = item
+                                BuilderRequests[builder.id].items[builderItem.fingerprint] = item
                                 found = true
                                 break
                             end
@@ -1009,7 +1009,7 @@ function GetInputs(skip, tab)
                                     item.missing = 0
                                 end
                                 SetItemStatus(item, builderRequest.delivering)
-                                BuilderRequests[builder.id][builderItem.fingerprint] = item
+                                BuilderRequests[builder.id].items[builderItem.fingerprint] = item
                             end
                         end
                     end
