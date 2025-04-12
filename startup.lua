@@ -923,7 +923,7 @@ function GetInputs(skip, tab)
                         if item.needed > item.available then
                             item.missing = item.needed - item.available
                         end
-                        if ExecutionMode ~= "DP" and not skip then
+                        if ExecutionMode ~= "DP" and not skip and not Config.oneCall then
                             SetItemStatus(item, bridge.isItemCrafting({fingerprint=requestedItem.fingerprint}))
                         else
                             SetItemStatus(item, false)
@@ -962,8 +962,10 @@ function GetInputs(skip, tab)
                             local status = "m"
                             if Validating.bridgeItem(availableItem) then
                                 if item.needed > availableItem.amount then
-                                    if bridge.isItemCrafting({fingerprint=requestedItem.fingerprint}) then
-                                        status = "c"
+                                    if not Config.oneCall then
+                                        if bridge.isItemCrafting({fingerprint=requestedItem.fingerprint}) then
+                                            status = "c"
+                                        end
                                     end
                                 else
                                     status = "a"
