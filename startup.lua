@@ -1283,7 +1283,7 @@ AllowedExport = false
 StartupSuccess = true
 os.setComputerLabel("Colony Resource Requester")
 ScanPeripherals() -- Get all peripherals
-if displayMode then
+if displayMode and startupSuccess then
     InitializeDisplay(monitor)
 end
 if not StartupSuccess then
