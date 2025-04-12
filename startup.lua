@@ -907,7 +907,11 @@ function GetInputs(skip, tab)
                             if item.needed > item.available then
                                 item.missing = item.needed - item.available
                             end
-                            SetItemStatus(item, bridge.isItemCrafting({fingerprint=requestedItem.fingerprint}))
+                            if ExecutionMode ~= "DP" then
+                                SetItemStatus(item, bridge.isItemCrafting({fingerprint=requestedItem.fingerprint}))
+                            else
+                                SetItemStatus(item, false)
+                            end
                             found = true
                             break
                         end
@@ -983,7 +987,7 @@ function GetInputs(skip, tab)
                             local found = false
                             for _, item in ipairs(BuilderRequests[builder.id].items) do
                                 if item.fingerprint == builderItem.fingerprint then
-                                    item.needed = item.needed + builderRequest.count * builderRequest.needed
+                                    item.needed = item.needed + builderRequest.item.count * builderRequest.needed
                                     if item.needed > item.available then
                                         item.missing = item.needed - item.available
                                     end
@@ -1291,7 +1295,7 @@ else
     end
     for i = 0, 7 do
         if i == 0 then
-            for _ = 0, BuilderCount do
+            for j = 0, BuilderCount do
                 GetInputs(false, i)
             end
         end
