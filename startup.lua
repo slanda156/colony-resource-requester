@@ -1,3 +1,4 @@
+require("src/types")
 Logging = require("src/logging")
 Validating = require("src/validation")
 Button = require("src/widgets").Button
@@ -15,9 +16,13 @@ function CreateConfig ()
     config.lastTab = 0
     config.logging = {}
     config.logging.logFile = "crr.log"
+    ---@type LogMode
     config.logging.logMode = "a"
+    ---@type LogLevel
     config.logging.logLevel = "INFO"
+    ---@type LogTimeSource
     config.logging.logTimeSource = "local"
+    ---@type LogTimeFormat
     config.logging.logTimeFormat = true
     config.allowedRequests = {}
     config.allowedRequests.enabled = false

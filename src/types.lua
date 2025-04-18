@@ -1,0 +1,4 @@
+---@alias LogLevel "DEBUG" | "INFO" | "WARNING" | "ERROR"
+---@alias LogMode "a" | "w"
+---@alias LogTimeSource "local" | "utc" | "ingame"
+---@alias LogTimeFormat true | false
