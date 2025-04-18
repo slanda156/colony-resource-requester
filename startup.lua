@@ -306,6 +306,14 @@ function CallbackSettingsChange ()
     Config.allowedRequests.enabled = widgets.filterRequests.active
     Config.allowedRequests.builder = widgets.filterBuilders.active
     Config.wifi.wifiEnable = widgets.wifiSettings.active
+    if widgets.debugMode.active then
+        LastLogLevel = Config.logging.logLevel
+        Config.logging.logLevel = "DEBUG"
+    else
+        Config.logging.logLevel = LastLogLevel
+    end
+    Config.oneCall = widgets.oneCall.active
+    Logging:setLogLevel(Config.logging.logLevel)
 end
 
 function ResetDisplay(mon)
@@ -334,7 +342,7 @@ function InitializeDisplay(mon)
     -- Stats
     Widgets[6] = {}
     -- Settings
-    Widgets[7] = {"saveSettings", "filterRequests", "filterBuilders", "wifiSettings"}
+    Widgets[7] = {"saveSettings", "filterRequests", "filterBuilders", "wifiSettings", "debugMode", "oneCall"}
     ResetDisplay(mon)
     Builders, BuilderCount = getBuilders()
     local width, height = mon.getSize()
@@ -382,6 +390,12 @@ function InitializeDisplay(mon)
     widgets.wifiSettings = Button.new(2, 8, 6, 1, "WIFI", CallbackSettingsChange, nil, true, mon)
     widgets.wifiSettings.active = Config.wifi.wifiEnable
     Logging:DEBUG("Added button: " .. widgets.wifiSettings.label)
+    widgets.debugMode = Button.new(2, 10, 17, 1, "Debug Mode", CallbackSettingsChange, nil, true, mon)
+    widgets.debugMode.active = Config.logging.logLevel == "DEBUG"
+    Logging:DEBUG("Added button: " .. widgets.debugMode.label)
+    widgets.oneCall = Button.new(2, 12, 17, 1, "One Call", CallbackSettingsChange, nil, true, mon)
+    widgets.oneCall.active = Config.oneCall
+    Logging:DEBUG("Added button: " .. widgets.oneCall.label)
 end
 
 function RefreshMonitor (mon)
