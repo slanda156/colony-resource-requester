@@ -255,11 +255,11 @@ end
 function Button:clicked(x, y)
     if x >= self.x - 1 and x < self.x + self.width and y >= self.y and y < self.y + self.height then -- self.x - 1, unsure why
         Logging:DEBUG("Button clicked: " .. self.label)
-        if self.callback then
-            self.callback(self.callbackArg)
-        end
         if self.switch then
             self.active = not self.active
+        end
+        if self.callback then
+            self.callback(self.callbackArg)
         end
         os.queueEvent("display_update")
         return true
