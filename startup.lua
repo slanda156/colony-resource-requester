@@ -549,40 +549,62 @@ function RefreshMonitor (mon)
         -- Citizens
         mon.setBackgroundColor(colors.gray)
         mon.setTextColor(colors.black)
-        if LineOffset == 0 then
-            mon.setCursorPos(1, 3 - LineOffset)
+        mon.setCursorPos(1, 3)
+        mon.write(string.rep(" ", width))
+        mon.setCursorPos(1, 3)
+        mon.write("Sex| Name")
+        local msg = "Job | Happiness | HP"
+        mon.setCursorPos(width - #msg, 3)
+        mon.write(msg)
+        -- Children
+        local usedLines = 0
+        local line = 4 - LineOffset
+        if line > 3 then
+            mon.setBackgroundColor(colors.gray)
+            mon.setCursorPos(1, line)
             mon.write(string.rep(" ", width))
-            mon.setCursorPos(1, 3 - LineOffset)
+            mon.setCursorPos(1, line)
             mon.write("Children: ")
         end
-        mon.setBackgroundColor(colors.lightGray)
-        local maxLines = 0
         for i, child in ipairs(Children) do
-            if i - LineOffset > height - 4 then
+            line = 4 + i - LineOffset
+            if line > height then
                 break
             end
-            if i - LineOffset >= 1 then
-                mon.setCursorPos(1, 4 + i - LineOffset)
+            if line > 3 then
+                mon.setBackgroundColor(colors.lightGray)
+                mon.setTextColor(colors.black)
+                mon.setCursorPos(1, line)
                 mon.write(string.rep(" ", width))
-                mon.setCursorPos(1, 4 + i - LineOffset)
-                mon.write(child.name)
+                mon.setCursorPos(1, line)
+                local g = ""
+                if child.gender == "female" then
+                    g = "F"
+                else
+                    g = "M"
+                end
+                mon.write("[" .. g .. "] " .. child.name)
+                local msg = string.format("%.1f", child.happiness) .. " " .. string.format("%.0f", child.health) .. "/" .. child.maxHealth
+                mon.setCursorPos(width - #msg, line)
+                mon.write(msg)
             end
-            maxLines = i
+            usedLines = i
         end
-        local line = 4 + maxLines - LineOffset
-        if 4 + maxLines - LineOffset > 2 then
+        -- Adults
+        local line = 5 + usedLines - LineOffset
+        if line > 3 then
             mon.setBackgroundColor(colors.gray)
-            mon.setCursorPos(1, 4 + maxLines - LineOffset)
+            mon.setCursorPos(1, line)
             mon.write(string.rep(" ", width))
-            mon.setCursorPos(1, 4 + maxLines - LineOffset)
+            mon.setCursorPos(1, line)
             mon.write("Adults: ")
         end
         for i, citizen in ipairs(Citizens) do
-            line = 4 + maxLines + i - LineOffset
-            if i - LineOffset > height - 4 then
+            line = 5 + usedLines + i - LineOffset
+            if line > height then
                 break
             end
-            if line > 2 then
+            if line > 3 then
                 mon.setBackgroundColor(colors.lightGray)
                 mon.setTextColor(colors.black)
                 mon.setCursorPos(1, line)
@@ -594,7 +616,14 @@ function RefreshMonitor (mon)
                 else
                     g = "M"
                 end
+                local job = ""
                 if citizen.work ~= nil and citizen.work ~= {} then
+                    local _jobParts = {}
+                    for part in string.gmatch(citizen.work.job, "[^%.]+") do
+                        table.insert(_jobParts, part)
+                    end
+                    job = _jobParts[#_jobParts]
+                    job = job:gsub("^%l", string.upper)
                     if citizen.isIdle then
                         mon.setTextColor(colors.yellow)
                     end
@@ -604,13 +633,16 @@ function RefreshMonitor (mon)
                     if citizen.health / citizen.maxHealth < 0.5 then
                         mon.setTextColor(colors.red)
                     end
-                    mon.write("[" .. g .. "] " .. citizen.name)
                 else
                     mon.setTextColor(colors.orange)
-                    mon.write("[" .. g .. "] " .. citizen.name)
                 end
+                mon.write("[" .. g .. "] " .. citizen.name)
+                local msg = job .. " " .. string.format("%.1f", citizen.happiness) .. " " .. string.format("%.0f", citizen.health) .. "/" .. citizen.maxHealth
+                mon.setCursorPos(width - #msg, line)
+                mon.write(msg)
             end
         end
+        -- Legend
         mon.setBackgroundColor(colors.black)
         mon.setTextColor(colors.yellow)
         mon.setCursorPos(1, height)
