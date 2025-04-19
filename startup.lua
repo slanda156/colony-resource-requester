@@ -1341,7 +1341,7 @@ timesMoveItems = {}
 timesGetInputs = {}
 timesUpdateDisplay = {}
 -- Start up
-VERSION = "0.3.0-dev"
+VERSION = "0.3.0"
 Config = LoadConfig()
 Logging:INFO("Starting up, v" .. VERSION)
 Running = true

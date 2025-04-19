@@ -109,13 +109,15 @@ if branchInput == "1" then -- main
     codes["src/widgets.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/main/src/widgets.lua"}
     codes["src/logging.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/main/src/logging.lua"}
     codes["src/function.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/main/src/function.lua"}
-    codes["logging.json"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/main/logging.json"}
+    codes["src/validation.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/main/src/validation.lua"}
+    codes["src/types.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/main/src/types.lua"}
 elseif branchInput == "2" then -- dev
     codes["startup.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/dev/startup.lua"}
     codes["src/widgets.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/dev/src/widgets.lua"}
     codes["src/logging.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/dev/src/logging.lua"}
     codes["src/function.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/dev/src/function.lua"}
     codes["src/validation.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/dev/src/validation.lua"}
+    codes["src/types.lua"] = {"https://raw.githubusercontent.com/slanda156/colony-resource-requester/dev/src/types.lua"}
 else -- invalid
     print("Invalid branch")
     return
