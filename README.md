@@ -4,7 +4,7 @@
 >A manager for your Minecolonie
 
 This was a resource requester for the Minecraft mod Minecolonies.
-Now its a whole managing programm in the making. You will be able see important stats of your colonie or see current material request that will be automaticly made and send to the colonie.
+Now its a whole managing programm in the making. You will be able see important stats of your colonie or see current material request that will be automaticly made and send to the colony.
 
 ![Example Image of the manager](example.png)
 
@@ -18,15 +18,23 @@ Now you can manage your colonie from one place.
 
 ## Installation
 
-Install with `pastebin get CCPD5tYp install` and run `install`
+Install with
 
-All necessary files will be donwloaded
+``` shell
+pastebin get CCPD5tYp install.lua
+```
+
+and run
+
+```shell
+install
+```
+
+For more information visit the [Wiki](https://github.com/slanda156/colony-resource-requester/wiki)
 
 ## ToDo
 
-* Fix bugs
-* More Tabs - Add more tabs with all the stats of your colonie
-* WiFi - Add support for the Pocket Computer too see live stats, everywhere
+See [TODO](TODO)
 
 ## Meta
 

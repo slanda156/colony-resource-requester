@@ -1,5 +1,5 @@
-logging = require("src/logging")
-strFuncs = require("src/function").strFuncs
+Logging = require("src/logging")
+Functions = require("src/function")
 
 local Group = {}
 Group.__index = Group
@@ -8,6 +8,7 @@ function Group.new(line, label, mon)
     local self = setmetatable({}, Group)
     self.type = "group"
     self.line = line
+    self.lineOffset = 0
     self.lines = 1
     self.label = label
     self.collapsed = false
@@ -40,29 +41,33 @@ function Group:setOrder(order)
 end
 
 function Group:addItem(item)
+    local error = false
     if not item[1] then
-        logging.log("ERROR", "Item name missing")
-        logging.log("DEBUG", "Item: " .. textutils.serialize(item))
-        return
+        Logging:ERROR("Item name missing")
+        Logging:DEBUG("Item: " .. textutils.serialize(item))
+        error = true
     end
     if not item[2] then
-        logging.log("ERROR", "Item needed missing")
-        logging.log("DEBUG", "Item: " .. textutils.serialize(item))
-        return
+        Logging:ERROR("Item needed missing")
+        Logging:DEBUG("Item: " .. textutils.serialize(item))
+        error = true
     end
     if not item[3] then
-        logging.log("ERROR", "Item available missing")
-        logging.log("DEBUG", "Item: " .. textutils.serialize(item))
-        return
+        Logging:ERROR("Item available missing")
+        Logging:DEBUG("Item: " .. textutils.serialize(item))
+        error = true
     end
     if not item[4] then
-        logging.log("ERROR", "Item missing missing")
-        logging.log("DEBUG", "Item: " .. textutils.serialize(item))
-        return
+        Logging:ERROR("Item missing missing")
+        Logging:DEBUG("Item: " .. textutils.serialize(item))
+        error = true
     end
     if not item[5] then
-        logging.log("ERROR", "Item status missing")
-        logging.log("DEBUG", "Item: " .. textutils.serialize(item))
+        Logging:ERROR("Item status missing")
+        Logging:DEBUG("Item: " .. textutils.serialize(item))
+        error = true
+    end
+    if error then
         return
     end
     table.insert(self.items, item)
@@ -94,12 +99,10 @@ end
 
 function Group:render()
     local width, height = self.monitor.getSize()
-    if self.line >= height -1 then
-        return
-    end
+    local line = self.line - self.lineOffset
     self.monitor.setBackgroundColor(colors.gray)
     self.monitor.setTextColor(colors.black)
-    self.monitor.setCursorPos(1, self.line)
+    self.monitor.setCursorPos(1, line)
     local orderMsg = ""
     local orderMsgStart = ""
     local orderMsgEnd = ""
@@ -112,7 +115,7 @@ function Group:render()
             orderMsgStart = orderMsgStart .. "[R]"
         else
             orderMsgStart = orderMsgStart .. "[?]"
-            logging.log("ERROR", "Unknown work order type: " .. self.order.workOrderType)
+            Logging:ERROR("Unknown work order type: " .. self.order.workOrderType)
         end
         if self.order.workOrderType == "UPGRADE" then
             orderMsgEnd = orderMsgEnd .. " (lvl" .. self.order.targetLevel - 1 .. " -> lvl" .. self.order.targetLevel .. ")"
@@ -131,19 +134,21 @@ function Group:render()
     else
         collSign = "-"
     end
-    if orderMsg == "" then
-        self.monitor.write(collSign .. self.size .. " " .. self.label .. ":" .. string.rep(" ", width))
-    else
-        self.monitor.write(collSign .. self.size .. " " .. self.label .. ": " .. orderMsg .. string.rep(" ", width))
+    if line < height -1 and line > 3 then
+        if orderMsg == "" then
+            self.monitor.write(collSign .. self.size .. " " .. self.label .. ":" .. string.rep(" ", width))
+        else
+            self.monitor.write(collSign .. self.size .. " " .. self.label .. ": " .. orderMsg .. string.rep(" ", width))
+        end
     end
     if not self.collapsed then
         self.monitor.setBackgroundColor(colors.lightGray)
         for i, item in ipairs(self.items) do
             if item[1] then
-                if self.line + i >= height - 1 then
+                if line + i >= height - 1 or line + 1 < 3 then
                     break
                 end
-                self.monitor.setCursorPos(1, self.line + i)
+                self.monitor.setCursorPos(1, line + i)
                 if item[5] == "a" then
                     self.monitor.setTextColor(colors.green)
                 elseif item[5] == "c" then
@@ -163,17 +168,17 @@ function Group:render()
                 if string.len(label) > maxLabelLength then
                     label = string.sub(label, 1, maxLabelLength - 3) .. "..."
                 end
-                local needed = strFuncs.compInt(item[2])
-                local available = strFuncs.compInt(item[3])
-                local missing = strFuncs.compInt(item[4])
+                local needed = Functions.compInt(item[2])
+                local available = Functions.compInt(item[3])
+                local missing = Functions.compInt(item[4])
                 self.monitor.write(string.rep(" ", width))
-                self.monitor.setCursorPos(4, self.line + i)
+                self.monitor.setCursorPos(4, line + i)
                 self.monitor.write(label)
-                self.monitor.setCursorPos(width - (spacing * 3 - 1), self.line + i)
+                self.monitor.setCursorPos(width - (spacing * 3 - 1), line + i)
                 self.monitor.write("|" .. needed)
-                self.monitor.setCursorPos(width - (spacing * 2 - 1), self.line + i)
+                self.monitor.setCursorPos(width - (spacing * 2 - 1), line + i)
                 self.monitor.write("|" .. available)
-                self.monitor.setCursorPos(width - (spacing * 1 - 1), self.line + i)
+                self.monitor.setCursorPos(width - (spacing * 1 - 1), line + i)
                 self.monitor.write("|" .. missing)
             end
         end
@@ -181,7 +186,8 @@ function Group:render()
 end
 
 function Group:clicked(x, y)
-    if y == self.line then
+    local line = self.line - self.lineOffset
+    if y == line and line > 3 then
         self:toggle()
         os.queueEvent("display_update")
         return true
@@ -192,7 +198,7 @@ end
 local Button = {}
 Button.__index = Button
 
-function Button.new(x, y, width, height, label, callback, mon)
+function Button.new(x, y, width, height, label, callback, arg, switch, mon)
     local self = setmetatable({}, Button)
     self.type = "button"
     self.x = x
@@ -207,8 +213,12 @@ function Button.new(x, y, width, height, label, callback, mon)
     end
     self.label = label
     self.callback = callback
+    self.callbackArg = arg
     self.active = false
+    self.switch = switch
     self.monitor = mon
+    self.backgroundActive = colors.green
+    self.backgroundInactive = colors.red
     return self
 end
 
@@ -216,35 +226,41 @@ function Button:render()
     self.monitor.setTextColor(colors.black)
     self.monitor.setCursorPos(self.x, self.y)
     if self.active then
-        self.monitor.setBackgroundColor(colors.green)
+        self.monitor.setBackgroundColor(self.backgroundActive)
     else
-        self.monitor.setBackgroundColor(colors.red)
+        self.monitor.setBackgroundColor(self.backgroundInactive)
     end
     local space = string.rep(" ", math.ceil((self.width - string.len(self.label)) / 2))
+    local halfedSpace = math.floor(self.height / 2)
     if self.height > 1 then
         local i = 0
         repeat
+            self.monitor.setCursorPos(self.x, self.y + i)
             self.monitor.write(string.rep(" ", self.width))
             i = i + 1
-        until i >= math.floor(self.height / 2)
+        until i >= halfedSpace
     end
+    self.monitor.setCursorPos(self.x, self.y + halfedSpace)
     self.monitor.write(space .. self.label .. space)
-    if math.mod(self.height, 2) == 0 then
+    if self.height > 1 and math.mod(self.height, 2) == 1 then
         local i = 0
         repeat
+            self.monitor.setCursorPos(self.x, self.y + halfedSpace + 1 + i)
             self.monitor.write(string.rep(" ", self.width))
             i = i + 1
-        until i >= math.floor(self.height / 2)
+        until i >= halfedSpace
     end
 end
 
 function Button:clicked(x, y)
     if x >= self.x - 1 and x < self.x + self.width and y >= self.y and y < self.y + self.height then -- self.x - 1, unsure why
-        logging.log("DEBUG", "Button clicked: " .. self.label)
-        if self.callback then
-            self.callback()
+        Logging:DEBUG("Button clicked: " .. self.label)
+        if self.switch then
+            self.active = not self.active
         end
-        self.active = not self.active
+        if self.callback then
+            self.callback(self.callbackArg)
+        end
         os.queueEvent("display_update")
         return true
     end
