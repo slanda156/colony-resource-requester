@@ -9,10 +9,10 @@ App:
         ✔ Add stats tab @done(24-08-25 19:58)
         ✔ Add color to the log terminal output @done(25-04-12 15:05)
         ✔ Add a settings file @done(24-08-25 19:58)
-        ☐ Add a settings tab
+        ✔ Add a settings tab @done(25-04-18 10:13)
         ✔ Move the Stats tab one line up @done(25-04-11 09:30)
         ✔ Move the Visitors tab one line up @done(25-04-11 09:30)
-        ☐ Add the citizen job to the citizen tab
+        ✔ Add the citizen job to the citizen tab @done(25-04-19 09:10)
         ✔ Make the first letter of the buildings name upper case @done(25-04-10 21:14)
         ✔ Add legend to work orders @done(25-04-11 09:30)
 
